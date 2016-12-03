@@ -48,7 +48,7 @@ function parseBitmap(buffer, mime) {
 			return cb.call(that, null, that);
 		});
 		break;
-	case MIME.JPEG:
+	case MIME.JPG:
 		try {
 			this.bitmap = JPEG.decode(buffer);
 			exifRotate(this, buffer); // EXIF data
@@ -105,25 +105,25 @@ export default class {
 	
 	/**
 	 * Writes the image to a local file
-	 * @param {String} filePath a path to the destination file (either PNG or JPEG)
+	 * @param {String} filePath a path to the destination file (either PNG or JPG)
 	 * @returns this for chaining of methods
 	 */
 	save(filePath) {
-//		let buffer = this.buffer;
-//		let that = this;
-//		let mime = mime.lookup(path);
-//		
-//		let stream = fs.createWriteStream(path);
-//		stream.on("open", function(fh) {
-//			stream.write(buffer);
-//			stream.end();
-//		}).on("error", function(err) {
-//			return throwError.call(that, err, cb);
-//		});
-//		stream.on("finish", function(fh) {
-//			return cb.call(that, null, that);
-//		});
-//		
-//		return this;
+		// let buffer = this.buffer;
+		// let that = this;
+		// let mime = mime.lookup(path);
+		
+		// let stream = fs.createWriteStream(path);
+		// stream.on("open", function(fh) {
+		// 	stream.write(buffer);
+		// 	stream.end();
+		// }).on("error", function(err) {
+		// 	return throwError.call(that, err, cb);
+		// });
+		// stream.on("finish", function(fh) {
+		// 	return cb.call(that, null, that);
+		// });
+		
+		// return this;
 	}
 };

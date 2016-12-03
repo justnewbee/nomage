@@ -292,61 +292,91 @@ function decode(buffer) {
  * 10 | 4 bytes | 「offset」 i.e. starting address, of the byte where the bitmap image data (pixel array) can be found.
  */
 
-function parseHeader(buffer, that) {
+
+/*
+ *  http://www.onicos.com/staff/iz/formats/bmp.html
+ * # BMP - Microsoft Windows bitmap image file
+ * ## Byte Order: Little-endian
+ * Offset   Length   Contents
+ * 0      2 bytes  "BM"
+ * 2      4 bytes  Total size included "BM" magic (s)
+  * 6      2 bytes  Reserved1
+  * 8      2 bytes  Reserved2
+ * 10      4 bytes  Offset bits
+ * 14      4 bytes  Header size (n)
+ * 18    n-4 bytes  Header (See bellow)
+ 14+n .. s-1      Image data
+
+Header: n==12 (Old BMP image file format, Used OS/2)
+
+Offset   Length   Contents
+ 18      2 bytes  Width
+ 20      2 bytes  Height
+ 22      2 bytes  Planes
+ 24      2 bytes  Bits per Pixel
+
+Header: n>12 (Microsoft Windows BMP image file)
+
+Offset   Length   Contents
+ 18      4 bytes  Width
+ 22      4 bytes  Height
+ 26      2 bytes  Planes
+ 28      2 bytes  Bits per Pixel
+ 30      4 bytes  Compression
+ 34      4 bytes  Image size
+ 38      4 bytes  X Pixels per meter
+ 42      4 bytes  Y Pixels per meter
+ 46      4 bytes  Number of Colors
+ 50      4 bytes  Colors Important
+ 54 (n-40) bytes  OS/2 new extentional fields??
+*/
+function parseHeader(buffer, withAlpha) {
 	// 0-2 signature
 	if (buffer.toString("utf-8", 0, 2) !== "BM") {
 		return null;
 	}
 	
 	let header = {
+		// file header 0 - 13
 		size: buffer.readUInt32LE(2), // 2-5
-		reserved: buffer.readUInt32LE(6), // 6 - 9
+//		reserved1: buffer.readUInt16LE(6), // 6 - 7 <- useless
+//		reserved2: buffer.readUInt16LE(6), // 8 - 9 <- useless
 		offset: buffer.readUInt32LE(10), // 10 - 13
+		// info header
 		headerSize: buffer.readUInt32LE(14), // 14 - 17
 		width: buffer.readUInt32LE(18), // 18 - 21
-		height: buffer.readUInt32LE(22),
+		height: buffer.readUInt32LE(22), // 22 - 25 <-- FIXME cannot get it right when the BMP is generated in mac...
+		planes: buffer.readUInt16LE(26), // 26 - 27
+		bitPP: buffer.readUInt16LE(28), // 30 - 31
+		compress: buffer.readUInt32LE(32), // 32 - 35
+		rawSize: buffer.readUInt32LE(36), // 36 - 39
+		hr: buffer.readUInt32LE(40), // 40 - 43
+		vr: buffer.readUInt32LE(44), // 44 - 47
+		colors: buffer.readUInt32LE(48), // 48 - 51
+		importantColors: buffer.readUInt32LE(52), // 52 - 55
 	};
 	
-//	pos += 4
-//	height: buffer.readUInt32LE(pos),
-//	pos += 4
-//	planes: buffer.readUInt16LE(pos),
-//	pos += 2
-//	bitPP: buffer.readUInt16LE(pos),
-//	pos += 2
-//	compress: buffer.readUInt32LE(pos),
-//	pos += 4
-//	rawSize: buffer.readUInt32LE(pos),
-//	pos += 4
-//	hr: buffer.readUInt32LE(pos),
-//	pos += 4
-//	vr: buffer.readUInt32LE(pos),
-//	pos += 4
-//	colors: buffer.readUInt32LE(pos),
-//	pos += 4
-//	importantColors: buffer.readUInt32LE(pos),
-//	pos += 4
-//	
-//	if (this.bitPP === 16 && this.withAlpha) {
-//		this.bitPP = 15;
-//	}
-//	
-//	if (this.bitPP < 15) {
-//		var len = this.colors === 0 ? 1 << this.bitPP : this.colors;
-//		this.palette = new Array(len);
-//		for (var i = 0; i < len; i++) {
-//			var blue = buffer.readUInt8(this.pos++);
-//			var green = buffer.readUInt8(this.pos++);
-//			var red = buffer.readUInt8(this.pos++);
-//			var quad = buffer.readUInt8(this.pos++);
-//			this.palette[i] = {
-//				red: red,
-//				green: green,
-//				blue: blue,
-//				quad: quad
-//			};
-//		}
-//	}
+	if (withAlpha && header.bitPP === 16) {
+		header.bitPP = 15;
+	}
+	
+	if (header.bitPP < 15) {
+		let len = header.colors === 0 ? 1 << header.bitPP : header.colors;
+		
+		this.palette = new Array(len);
+		for (var i = 0; i < len; i++) {
+			var blue = buffer.readUInt8(this.pos++);
+			var green = buffer.readUInt8(this.pos++);
+			var red = buffer.readUInt8(this.pos++);
+			var quad = buffer.readUInt8(this.pos++);
+			this.palette[i] = {
+				red: red,
+				green: green,
+				blue: blue,
+				quad: quad
+			};
+		}
+	}
 	
 	return header;
 }

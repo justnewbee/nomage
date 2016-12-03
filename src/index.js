@@ -1,19 +1,29 @@
-//import fileType from "./lib/file/type";
-//import pngParse from "./lib/png/parse";
-//import jpegParse from "./lib/jpeg/parse";
-import bmpParse from "./lib/bmp/parse";
+import bitmapParse from "./lib/bitmap/parse";
+import bitmapUnarse from "./lib/bitmap/unparse";
+import fileSave from "./lib/file/save";
 
-//console.info(fileType("test.jpg"));
-//console.info(fileType("test.jpeg"));
-//console.info(fileType("test.gif"));
-//console.info(fileType("test.png"));
-//console.info(fileType("test.bmp"));
-//console.info(fileType("test.mp3"));
-//console.info(fileType("test.dmg"));
-//console.info(fileType("index.js"));
-//
-//console.info(pngParse("test.png"));
-//console.info(jpegParse("test.jpeg"));
-console.info(bmpParse("test.bmp"));
+let bmBMP = bitmapParse("test.bmp");
+let bmJPG = bitmapParse("test.jpeg");
+let bmPNG = bitmapParse("test.png");
+
+console.info({
+	bmBMP, bmJPG, bmPNG
+});
+
+Promise.all([
+	bitmapUnarse(bmBMP),
+	bitmapUnarse(bmJPG),
+	bitmapUnarse(bmPNG)
+]).then(arr => {
+	let [bufBMP, bufJPG, bufPNG] = arr;
+
+	console.info({
+		bufBMP, bufJPG, bufPNG
+	});
+
+	fileSave(bufBMP, "another.bmp");
+	fileSave(bufJPG, "another.jpg");
+	fileSave(bufPNG, "another.png");
+});
 
 export default {};

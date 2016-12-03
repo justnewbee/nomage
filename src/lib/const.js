@@ -2,7 +2,7 @@ export default {
 	// supported mime types
 	MIME: {
 		PNG: "image/png",
-		JPEG: "image/jpeg",
+		JPG: "image/jpeg",
 		BMP: "image/bmp",
 		GIF: "image/gif" // 未支持
 	},
