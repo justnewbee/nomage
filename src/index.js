@@ -16,11 +16,11 @@ Promise.all([
 	bitmapUnarse(bmPNG)
 ]).then(arr => {
 	let [bufBMP, bufJPG, bufPNG] = arr;
-
+	
 	console.info({
 		bufBMP, bufJPG, bufPNG
 	});
-
+	
 	fileSave(bufBMP, "another.bmp");
 	fileSave(bufJPG, "another.jpg");
 	fileSave(bufPNG, "another.png");
