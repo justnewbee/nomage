@@ -11,7 +11,7 @@ function BmpEncoder(bitmap) {
 	this.extraBytes = this.width % 4;
 	this.rgbSize = this.height * (3 * this.width + this.extraBytes);
 	this.headerInfoSize = 40;
-
+	
 	this.data = [];
 	/******************header***********************/
 	this.flag = "BM";

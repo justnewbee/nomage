@@ -35,9 +35,16 @@
  Basic GUI blocking jpeg encoder
  */
 
-var btoa = btoa || function(buf) {
-	return new Buffer(buf).toString("base64");
-};
+const ZIG_ZAG = [
+	0, 1, 5, 6, 14, 15, 27, 28,
+	2, 4, 7, 13, 16, 26, 29, 42,
+	3, 8, 12, 17, 25, 30, 41, 43,
+	9, 11, 18, 24, 31, 40, 44, 53,
+	10, 19, 23, 32, 39, 45, 52, 54,
+	20, 22, 33, 38, 46, 51, 55, 60,
+	21, 34, 37, 47, 50, 56, 59, 61,
+	35, 36, 48, 49, 57, 58, 62, 63
+];
 
 function JPEGEncoder(quality) {
 	var YTable = new Array(64);
@@ -63,17 +70,6 @@ function JPEGEncoder(quality) {
 	var clt = new Array(256);
 	var RGB_YUV_TABLE = new Array(2048);
 	var currentQuality;
-	
-	var ZigZag = [
-		0, 1, 5, 6, 14, 15, 27, 28,
-		2, 4, 7, 13, 16, 26, 29, 42,
-		3, 8, 12, 17, 25, 30, 41, 43,
-		9, 11, 18, 24, 31, 40, 44, 53,
-		10, 19, 23, 32, 39, 45, 52, 54,
-		20, 22, 33, 38, 46, 51, 55, 60,
-		21, 34, 37, 47, 50, 56, 59, 61,
-		35, 36, 48, 49, 57, 58, 62, 63
-	];
 	
 	var std_dc_luminance_nrcodes = [0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0];
 	var std_dc_luminance_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -148,7 +144,7 @@ function JPEGEncoder(quality) {
 			} else if (t > 255) {
 				t = 255;
 			}
-			YTable[ZigZag[i]] = t;
+			YTable[ZIG_ZAG[i]] = t;
 		}
 		var UVQT = [
 			17, 18, 24, 47, 99, 99, 99, 99,
@@ -167,7 +163,7 @@ function JPEGEncoder(quality) {
 			} else if (u > 255) {
 				u = 255;
 			}
-			UVTable[ZigZag[j]] = u;
+			UVTable[ZIG_ZAG[j]] = u;
 		}
 		var aasf = [
 			1.0, 1.387039845, 1.306562965, 1.175875602,
@@ -176,8 +172,8 @@ function JPEGEncoder(quality) {
 		var k = 0;
 		for (var row = 0; row < 8; row++) {
 			for (var col = 0; col < 8; col++) {
-				fdtblY[k] = (1.0 / (YTable [ZigZag[k]] * aasf[row] * aasf[col] * 8.0));
-				fdtblUV[k] = (1.0 / (UVTable[ZigZag[k]] * aasf[row] * aasf[col] * 8.0));
+				fdtblY[k] = (1.0 / (YTable [ZIG_ZAG[k]] * aasf[row] * aasf[col] * 8.0));
+				fdtblUV[k] = (1.0 / (UVTable[ZIG_ZAG[k]] * aasf[row] * aasf[col] * 8.0));
 				k++;
 			}
 		}
@@ -276,7 +272,7 @@ function JPEGEncoder(quality) {
 	}
 	
 	// DCT & quantization core
-	function fDCTQuant(data, fdtbl) {
+	function fDCTQuantize(data, fdtbl) {
 		var d0, d1, d2, d3, d4, d5, d6, d7;
 		/* Pass 1: process rows. */
 		var dataOff = 0;
@@ -534,14 +530,14 @@ function JPEGEncoder(quality) {
 		const I16 = 16;
 		const I63 = 63;
 		const I64 = 64;
-		var DU_DCT = fDCTQuant(CDU, fdtbl);
-		//ZigZag reorder
+		var DU_DCT = fDCTQuantize(CDU, fdtbl);
+		// ZigZag reorder
 		for (var j = 0; j < I64; ++j) {
-			DU[ZigZag[j]] = DU_DCT[j];
+			DU[ZIG_ZAG[j]] = DU_DCT[j];
 		}
 		var Diff = DU[0] - DC;
 		DC = DU[0];
-		//Encode DC
+		// Encode DC
 		if (Diff == 0) {
 			writeBits(HTDC[0]); // Diff might be 0
 		} else {
@@ -549,12 +545,11 @@ function JPEGEncoder(quality) {
 			writeBits(HTDC[category[pos]]);
 			writeBits(bitcode[pos]);
 		}
-		//Encode ACs
+		// Encode ACs
 		var end0pos = 63; // was const... which is crazy
-		for (; end0pos > 0 && DU[end0pos] === 0; end0pos--) {
-		}
+		for (; end0pos > 0 && DU[end0pos] === 0; end0pos--) {}
 		
-		//end0pos = first element in reverse order !=0
+		// end0pos = first element in reverse order !=0
 		if (end0pos == 0) {
 			writeBits(EOB);
 			return DC;
@@ -586,7 +581,7 @@ function JPEGEncoder(quality) {
 	
 	function initCharLookupTable() {
 		var sfcc = String.fromCharCode;
-		for (var i = 0; i < 256; i++) { ///// ACHTUNG // 255
+		for (var i = 0; i < 256; i++) { // ACHTUNG // 255
 			clt[i] = sfcc(i);
 		}
 	}
@@ -675,8 +670,6 @@ function JPEGEncoder(quality) {
 			y += 8;
 		}
 		
-		////////////////////////////////////////////////////////////////
-		
 		// Do the bit alignment of the EOI marker
 		if (bytepos >= 0) {
 			var fillbits = [];
@@ -685,16 +678,9 @@ function JPEGEncoder(quality) {
 			writeBits(fillbits);
 		}
 		
-		writeWord(0xFFD9); //EOI
+		writeWord(0xFFD9); // EOI
 		
-		//return new Uint8Array(byteout);
 		return new Buffer(byteout);
-		
-		var jpegDataUri = `data:image/jpeg;base64,${btoa(byteout.join(""))}`;
-		
-		byteout = [];
-		
-		return jpegDataUri;
 	};
 	
 	function setQuality(quality) {
