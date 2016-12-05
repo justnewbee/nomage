@@ -36,17 +36,14 @@
  */
 
 var btoa = btoa || function(buf) {
-	return new Buffer(buf).toString('base64');
+	return new Buffer(buf).toString("base64");
 };
 
 function JPEGEncoder(quality) {
-	var self = this;
-	var fround = Math.round;
-	var ffloor = Math.floor;
 	var YTable = new Array(64);
 	var UVTable = new Array(64);
-	var fdtbl_Y = new Array(64);
-	var fdtbl_UV = new Array(64);
+	var fdtblY = new Array(64);
+	var fdtblUV = new Array(64);
 	var YDC_HT;
 	var UVDC_HT;
 	var YAC_HT;
@@ -145,7 +142,7 @@ function JPEGEncoder(quality) {
 		];
 		
 		for (var i = 0; i < 64; i++) {
-			var t = ffloor((YQT[i] * sf + 50) / 100);
+			var t = Math.floor((YQT[i] * sf + 50) / 100);
 			if (t < 1) {
 				t = 1;
 			} else if (t > 255) {
@@ -164,7 +161,7 @@ function JPEGEncoder(quality) {
 			99, 99, 99, 99, 99, 99, 99, 99
 		];
 		for (var j = 0; j < 64; j++) {
-			var u = ffloor((UVQT[j] * sf + 50) / 100);
+			var u = Math.floor((UVQT[j] * sf + 50) / 100);
 			if (u < 1) {
 				u = 1;
 			} else if (u > 255) {
@@ -179,22 +176,22 @@ function JPEGEncoder(quality) {
 		var k = 0;
 		for (var row = 0; row < 8; row++) {
 			for (var col = 0; col < 8; col++) {
-				fdtbl_Y[k] = (1.0 / (YTable [ZigZag[k]] * aasf[row] * aasf[col] * 8.0));
-				fdtbl_UV[k] = (1.0 / (UVTable[ZigZag[k]] * aasf[row] * aasf[col] * 8.0));
+				fdtblY[k] = (1.0 / (YTable [ZigZag[k]] * aasf[row] * aasf[col] * 8.0));
+				fdtblUV[k] = (1.0 / (UVTable[ZigZag[k]] * aasf[row] * aasf[col] * 8.0));
 				k++;
 			}
 		}
 	}
 	
-	function computeHuffmanTbl(nrcodes, std_table) {
+	function computeHuffmanTbl(nrcodes, stdTable) {
 		var codevalue = 0;
 		var pos_in_table = 0;
-		var HT = new Array();
+		var HT = [];
 		for (var k = 1; k <= 16; k++) {
 			for (var j = 1; j <= nrcodes[k]; j++) {
-				HT[std_table[pos_in_table]] = [];
-				HT[std_table[pos_in_table]][0] = codevalue;
-				HT[std_table[pos_in_table]][1] = k;
+				HT[stdTable[pos_in_table]] = [];
+				HT[stdTable[pos_in_table]][0] = codevalue;
+				HT[stdTable[pos_in_table]][1] = k;
 				pos_in_table++;
 				codevalue++;
 			}
@@ -214,14 +211,14 @@ function JPEGEncoder(quality) {
 		var nrlower = 1;
 		var nrupper = 2;
 		for (var cat = 1; cat <= 15; cat++) {
-			//Positive numbers
+			// positive numbers
 			for (var nr = nrlower; nr < nrupper; nr++) {
 				category[32767 + nr] = cat;
 				bitcode[32767 + nr] = [];
 				bitcode[32767 + nr][1] = cat;
 				bitcode[32767 + nr][0] = nr;
 			}
-			//Negative numbers
+			// negative numbers
 			for (var nrneg = -(nrupper - 1); nrneg <= -nrlower; nrneg++) {
 				category[32767 + nrneg] = cat;
 				bitcode[32767 + nrneg] = [];
@@ -260,8 +257,7 @@ function JPEGEncoder(quality) {
 				if (bytenew == 0xFF) {
 					writeByte(0xFF);
 					writeByte(0);
-				}
-				else {
+				} else {
 					writeByte(bytenew);
 				}
 				bytepos = 7;
@@ -271,13 +267,12 @@ function JPEGEncoder(quality) {
 	}
 	
 	function writeByte(value) {
-		//byteout.push(clt[value]); // write char directly instead of converting later
 		byteout.push(value);
 	}
 	
 	function writeWord(value) {
-		writeByte((value >> 8) & 0xFF);
-		writeByte((value   ) & 0xFF);
+		writeByte(value >> 8 & 0xFF);
+		writeByte(value & 0xFF);
 	}
 	
 	// DCT & quantization core
@@ -427,9 +422,7 @@ function JPEGEncoder(quality) {
 		for (i = 0; i < I64; ++i) {
 			// Apply the quantization and scaling factor & Round to nearest integer
 			fDCTQuant = data[i] * fdtbl[i];
-			outputfDCTQuant[i] = (fDCTQuant > 0.0) ? ((fDCTQuant + 0.5) | 0) : ((fDCTQuant - 0.5) | 0);
-			//outputfDCTQuant[i] = fround(fDCTQuant);
-			
+			outputfDCTQuant[i] = fDCTQuant > 0.0 ? (fDCTQuant + 0.5) | 0 : (fDCTQuant - 0.5) | 0;
 		}
 		return outputfDCTQuant;
 	}
@@ -558,7 +551,7 @@ function JPEGEncoder(quality) {
 		}
 		//Encode ACs
 		var end0pos = 63; // was const... which is crazy
-		for (; (end0pos > 0) && (DU[end0pos] == 0); end0pos--) {
+		for (; end0pos > 0 && DU[end0pos] === 0; end0pos--) {
 		}
 		
 		//end0pos = first element in reverse order !=0
@@ -569,14 +562,15 @@ function JPEGEncoder(quality) {
 		var i = 1;
 		var lng;
 		while (i <= end0pos) {
-			var startpos = i;
-			for (; (DU[i] == 0) && (i <= end0pos); ++i) {
-			}
-			var nrzeroes = i - startpos;
+			var startPos = i;
+			for (; DU[i] === 0 && i <= end0pos; ++i) {}
+			
+			var nrzeroes = i - startPos;
 			if (nrzeroes >= I16) {
 				lng = nrzeroes >> 4;
-				for (var nrmarker = 1; nrmarker <= lng; ++nrmarker)
+				for (var nrmarker = 1; nrmarker <= lng; ++nrmarker) {
 					writeBits(M16zeroes);
+				}
 				nrzeroes = nrzeroes & 0xF;
 			}
 			pos = 32767 + DU[i];
@@ -598,14 +592,12 @@ function JPEGEncoder(quality) {
 	}
 	
 	this.encode = function(image, quality) {// image data object
-		var time_start = new Date().getTime();
-		
 		if (quality) {
 			setQuality(quality);
 		}
 		
 		// Initialize bit writer
-		byteout = new Array();
+		byteout = [];
 		bytenew = 0;
 		bytepos = 7;
 		
@@ -632,7 +624,7 @@ function JPEGEncoder(quality) {
 		var height = image.height;
 		
 		var quadWidth = width * 4;
-		var tripleWidth = width * 3;
+//		var tripleWidth = width * 3;
 		
 		var x, y = 0;
 		var r, g, b;
@@ -648,14 +640,14 @@ function JPEGEncoder(quality) {
 				for (pos = 0; pos < 64; pos++) {
 					row = pos >> 3;// /8
 					col = ( pos & 7 ) * 4; // %8
-					p = start + ( row * quadWidth ) + col;
+					p = start + row * quadWidth + col;
 					
 					if (y + row >= height) { // padding bottom
-						p -= (quadWidth * (y + 1 + row - height));
+						p -= quadWidth * (y + 1 + row - height);
 					}
 					
-					if (x + col >= quadWidth) { // padding right	
-						p -= ((x + col) - quadWidth + 4)
+					if (x + col >= quadWidth) { // padding right
+						p -= x + col - quadWidth + 4;
 					}
 					
 					r = imageData[p++];
@@ -675,9 +667,9 @@ function JPEGEncoder(quality) {
 					
 				}
 				
-				DCY = processDU(YDU, fdtbl_Y, DCY, YDC_HT, YAC_HT);
-				DCU = processDU(UDU, fdtbl_UV, DCU, UVDC_HT, UVAC_HT);
-				DCV = processDU(VDU, fdtbl_UV, DCV, UVDC_HT, UVAC_HT);
+				DCY = processDU(YDU, fdtblY, DCY, YDC_HT, YAC_HT);
+				DCU = processDU(UDU, fdtblUV, DCU, UVDC_HT, UVAC_HT);
+				DCV = processDU(VDU, fdtblUV, DCV, UVDC_HT, UVAC_HT);
 				x += 32;
 			}
 			y += 8;
@@ -698,12 +690,12 @@ function JPEGEncoder(quality) {
 		//return new Uint8Array(byteout);
 		return new Buffer(byteout);
 		
-		var jpegDataUri = 'data:image/jpeg;base64,' + btoa(byteout.join(''));
+		var jpegDataUri = `data:image/jpeg;base64,${btoa(byteout.join(""))}`;
 		
 		byteout = [];
 		
-		return jpegDataUri
-	}
+		return jpegDataUri;
+	};
 	
 	function setQuality(quality) {
 		if (quality <= 0) {
@@ -714,7 +706,7 @@ function JPEGEncoder(quality) {
 		}
 		
 		if (currentQuality == quality) {
-			return
+			return;
 		} // don't recalc if unchanged
 		
 		var sf = 0;
@@ -729,12 +721,11 @@ function JPEGEncoder(quality) {
 	}
 	
 	function init() {
-		var time_start = new Date().getTime();
 		if (!quality) {
 			quality = 50;
 		}
 		// Create tables
-		initCharLookupTable()
+		initCharLookupTable();
 		initHuffmanTbl();
 		initCategoryNumber();
 		initRGBYUVTable();
@@ -743,31 +734,9 @@ function JPEGEncoder(quality) {
 	}
 	
 	init();
-	
+}
+
+export default (imgData, quality = 100) => {
+	let encoder = new JPEGEncoder(quality);
+	return encoder.encode(imgData, quality);
 };
-module.exports = encode;
-
-function encode(imgData, qu) {
-	if (typeof qu === 'undefined') {
-		qu = 50;
-	}
-	var encoder = new JPEGEncoder(qu);
-	var data = encoder.encode(imgData, qu);
-	return {
-		data: data,
-		width: imgData.width,
-		height: imgData.height
-	};
-}
-
-// helper function to get the imageData of an existing image on the current page.
-function getImageDataFromImage(idOrElement) {
-	var theImg = (typeof(idOrElement) == 'string') ? document.getElementById(idOrElement) : idOrElement;
-	var cvs = document.createElement('canvas');
-	cvs.width = theImg.width;
-	cvs.height = theImg.height;
-	var ctx = cvs.getContext("2d");
-	ctx.drawImage(theImg, 0, 0);
-	
-	return (ctx.getImageData(0, 0, cvs.width, cvs.height));
-}

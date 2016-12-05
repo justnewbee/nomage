@@ -1,7 +1,7 @@
-import JPEG from "jpeg-js";
+import decode from "./decode";
 
 /**
  * 
  * @param {Buffer} buffer
  */
-export default buffer => JPEG.decode(buffer);
+export default buffer => decode(buffer);
