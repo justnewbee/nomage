@@ -35,6 +35,8 @@
  Basic GUI blocking jpeg encoder
  */
 
+import JPG from "./const";
+
 const ZIG_ZAG = [
 	0, 1, 5, 6, 14, 15, 27, 28,
 	2, 4, 7, 13, 16, 26, 29, 42,
@@ -424,7 +426,7 @@ function JPEGEncoder(quality) {
 	}
 	
 	function writeAPP0() {
-		writeWord(0xFFE0); // marker
+		writeWord(JPG.APP0);
 		writeWord(16); // length
 		writeByte(0x4A); // J
 		writeByte(0x46); // F
@@ -441,7 +443,7 @@ function JPEGEncoder(quality) {
 	}
 	
 	function writeSOF0(width, height) {
-		writeWord(0xFFC0); // marker
+		writeWord(JPG.SOF0);
 		writeWord(17);   // length, truecolor YUV JPG
 		writeByte(8);    // precision
 		writeWord(height);
@@ -459,8 +461,8 @@ function JPEGEncoder(quality) {
 	}
 	
 	function writeDQT() {
-		writeWord(0xFFDB); // marker
-		writeWord(132);	   // length
+		writeWord(JPG.DQT);
+		writeWord(132);
 		writeByte(0);
 		for (var i = 0; i < 64; i++) {
 			writeByte(YTable[i]);
@@ -472,7 +474,7 @@ function JPEGEncoder(quality) {
 	}
 	
 	function writeDHT() {
-		writeWord(0xFFC4); // marker
+		writeWord(JPG.DHT);
 		writeWord(0x01A2); // length
 		
 		writeByte(0); // HTYDCinfo
@@ -509,7 +511,7 @@ function JPEGEncoder(quality) {
 	}
 	
 	function writeSOS() {
-		writeWord(0xFFDA); // marker
+		writeWord(JPG.SOS);
 		writeWord(12); // length
 		writeByte(3); // nrofcomponents
 		writeByte(1); // IdY
@@ -597,7 +599,7 @@ function JPEGEncoder(quality) {
 		bytepos = 7;
 		
 		// Add JPEG headers
-		writeWord(0xFFD8); // SOI
+		writeWord(JPG.SOI);
 		writeAPP0();
 		writeDQT();
 		writeSOF0(image.width, image.height);
@@ -678,7 +680,7 @@ function JPEGEncoder(quality) {
 			writeBits(fillbits);
 		}
 		
-		writeWord(0xFFD9); // EOI
+		writeWord(JPG.EOI);
 		
 		return new Buffer(byteout);
 	};

@@ -3,7 +3,7 @@ import bitmapUnarse from "./lib/bitmap/unparse";
 import fileSave from "./lib/file/save";
 
 let bmBMP = bitmapParse("test.bmp");
-let bmJPG = bitmapParse("test.jpeg");
+let bmJPG = bitmapParse("test.jpg");
 let bmPNG = bitmapParse("test.png");
 
 console.info({

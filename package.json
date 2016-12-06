@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "./node_modules/.bin/babel -w src/ -d build",
-    "test": "NODE_ENV=test npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 60000",
+    "test": "NODE_ENV=test npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 10000",
     "build": "./node_modules/.bin/babel src/ -d build"
   },
   "keywords": [
@@ -19,6 +19,7 @@
     "bignumber.js": "^3.0.1",
     "exif-parser": "^0.1.9",
     "file-type": "^3.9.0",
+    "jpeg-js": "^0.2.0",
     "load-bmfont": "^1.2.3",
     "mime": "^1.3.4",
     "pixelmatch": "^4.0.0",
