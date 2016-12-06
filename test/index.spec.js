@@ -13,15 +13,15 @@ import bitmapUnparse from "../src/lib/bitmap/unparse";
 const PATH_TEST_JS = path.join(__dirname, "./index.spec.js");
 
 function generateTestImageData(relPath) {
-	let [, W, H, EXT] = relPath.match(/_(\d+)x(\d+)\.(\w+)$/); // 开发保证一定 match 忽略第一个整体值
+	let [, W, H] = relPath.match(/_(\d+)x(\d+)\.(\w+)$/); // 开发保证一定 match 忽略第一个整体值
 	let PATH = path.join(__dirname, "images", relPath);
+	let PATH_SAVE = path.join(__dirname, "images", "saved_by_test" + relPath);
 	
 	return {
 		W: Number(W),
 		H: Number(H),
-		EXT,
 		PATH,
-		PATH_SAVE: `${PATH.replace(/\.\w+$/, "")}_save\.${EXT}`,
+		PATH_SAVE,
 		BUFFER: fs.readFileSync(PATH)
 	};
 }
