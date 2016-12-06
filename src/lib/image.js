@@ -1,6 +1,7 @@
-import fs from "fs";
-
 import {MIME} from "./const";
+import bitmapParse from "./bitmap/parse";
+import bitmapUnparse from "./bitmap/unparse";
+import fileSave from "./file/save";
 
 //import mime from "mime";
 
@@ -64,22 +65,20 @@ function parseBitmap(buffer, mime) {
 	}
 }
 
-export default class {
+export default class Image {
 	constructor() {
 		let arg0 = arguments[0];
 		
 		if ("number" === typeof arg0) {
 			this._bitmap = createBitmapFromScratch(arg0, arguments[1], arguments[2]);
-//		} else if ("object" === typeof arg0 && arg0.constructor === NImg) {
+//		} else if ("object" === typeof arg0 && arg0.constructor === Image) {
 //			this._createFromClone();
 //		} else if (/(?:[a-z]+:)?\/\//.test(arg0)) {
 //			this._createFromUrl(arg0);
-//		} else if ("string" === typeof arg0) {
-//			this._createFromPath(arg0);
-//		} else if ("object" === typeof arg0) {
-//			this._createFromBuffer(arg0);
+		} else if ("string" === typeof arg0 || Buffer.isBuffer(arg0)) {
+			this._bitmap = bitmapParse(arg0);
 		} else {
-			throw new Error("No matching constructor overloading was found. Please see the docs for how to call the NImg constructor.");
+			throw new Error("no matching constructor overloading was found. Please see the docs for how to call the Image constructor.");
 		}
 	}
 	
@@ -105,25 +104,12 @@ export default class {
 	
 	/**
 	 * Writes the image to a local file
-	 * @param {String} filePath a path to the destination file (either PNG or JPG)
-	 * @returns this for chaining of methods
+	 * @param {String} savePath a path to the destination file (either PNG or JPG)
+	 * @returns {Promise}
 	 */
-	save(filePath) {
-		// let buffer = this.buffer;
-		// let that = this;
-		// let mime = mime.lookup(path);
-		
-		// let stream = fs.createWriteStream(path);
-		// stream.on("open", function(fh) {
-		// 	stream.write(buffer);
-		// 	stream.end();
-		// }).on("error", function(err) {
-		// 	return throwError.call(that, err, cb);
-		// });
-		// stream.on("finish", function(fh) {
-		// 	return cb.call(that, null, that);
-		// });
-		
-		// return this;
+	save(savePath) {
+		return bitmapUnparse(bitmapParse(this.buffer)).then(buffer => {
+			fileSave(buffer, savePath);
+		});
 	}
 };

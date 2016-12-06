@@ -10,6 +10,7 @@ import fileSave from "../src/lib/file/save";
 import bitmapParse from "../src/lib/bitmap/parse";
 import bitmapUnparse from "../src/lib/bitmap/unparse";
 
+const NO_COVER = process.env.NODE_ENV === "test-no-cover"; // 启用覆盖率会导致大图的时候运行特别慢 所以有这个标识
 const PATH_TEST_JS = path.join(__dirname, "./index.spec.js");
 
 function generateTestImageData(relPath) {
@@ -28,7 +29,7 @@ function generateTestImageData(relPath) {
 
 const IMAGES = {
 	BMP: generateTestImageData("test_320x240.bmp"),
-	JPG: generateTestImageData("test_236x364.jpeg"),
+	JPG: generateTestImageData(NO_COVER ? "test_1280x1920.jpg" : "test_236x364.jpeg"),
 	PNG: generateTestImageData("test_1000x1460.png")
 };
 
