@@ -1,7 +1,5 @@
 import {MIME} from "./const";
 import bitmapParse from "./bitmap/parse";
-import bitmapUnparse from "./bitmap/unparse";
-import fileSave from "./file/save";
 
 //import mime from "mime";
 
@@ -33,38 +31,6 @@ function createFromPath(filePath) {
 //	});
 }
 
-function parseBitmap(buffer, mime) {
-	switch (this.getMIME()) {
-	case MIME.PNG:
-		var png = new PNG();
-		png.parse(buffer, function(err, data) {
-			if (err) {
-				return throwError.call(that, err, cb);
-			}
-			that.bitmap = {
-				data: new Buffer(data.data),
-				width: data.width,
-				height: data.height
-			};
-			return cb.call(that, null, that);
-		});
-		break;
-	case MIME.JPG:
-		try {
-			this.bitmap = JPEG.decode(buffer);
-			exifRotate(this, buffer); // EXIF data
-			return cb.call(this, null, this);
-		} catch (err) {
-			return cb.call(this, err, this);
-		}
-	case MIME.BMP:
-		this.bitmap = BMP.decode(buffer);
-		return cb.call(this, null, this);
-	default:
-		throw new Error("Unsupported MIME type: " + mime);
-	}
-}
-
 export default class Image {
 	constructor() {
 		let arg0 = arguments[0];
@@ -90,8 +56,12 @@ export default class Image {
 		return this._bitmap.height;
 	}
 	
-	get buffer() {
-		return this._bitmap.buffer;
+	get mime() {
+		return this._bitmap.mime;
+	}
+	
+	get data() {
+		return this._bitmap.data;
 	}
 	
 	get base64() {
@@ -108,8 +78,8 @@ export default class Image {
 	 * @returns {Promise}
 	 */
 	save(savePath) {
-		return bitmapUnparse(bitmapParse(this.buffer)).then(buffer => {
-			fileSave(buffer, savePath);
-		});
+//		return bitmapUnparse(bitmapParse(this.data)).then(buffer => {
+//			fileSave(buffer, savePath);
+//		});
 	}
 };
