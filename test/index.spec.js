@@ -5,19 +5,23 @@ import path from "path";
 import fs from "fs";
 
 import CONST from "../src/lib/const";
-import mime from "../src/lib/file/mime";
+import fileMime from "../src/lib/file/mime";
+import fileSave from "../src/lib/file/save";
 import bitmapParse from "../src/lib/bitmap/parse";
+import bitmapUnparse from "../src/lib/bitmap/unparse";
 
 const PATH_TEST_JS = path.join(__dirname, "./index.spec.js");
 
 function generateTestImageData(relPath) {
-	let [, W, H] = relPath.match(/_(\d+)x(\d+)\.\w+$/); // 开发保证一定 match 忽略第一个整体值
+	let [, W, H, EXT] = relPath.match(/_(\d+)x(\d+)\.(\w+)$/); // 开发保证一定 match 忽略第一个整体值
 	let PATH = path.join(__dirname, "images", relPath);
 	
 	return {
 		W: Number(W),
 		H: Number(H),
+		EXT,
 		PATH,
+		PATH_SAVE: `${PATH.replace(/\.\w+$/, "")}_save\.${EXT}`,
 		BUFFER: fs.readFileSync(PATH)
 	};
 }
@@ -31,56 +35,56 @@ const IMAGES = {
 describe("file mime", function() {
 	describe("get image mime from file path", function() {
 		it("bmp", function() {
-			mime(IMAGES.BMP.PATH).should.equal(CONST.MIME.BMP);
+			fileMime(IMAGES.BMP.PATH).should.equal(CONST.MIME.BMP);
 		});
 		it("jpg", function() {
-			mime(IMAGES.JPG.PATH).should.equal(CONST.MIME.JPG);
+			fileMime(IMAGES.JPG.PATH).should.equal(CONST.MIME.JPG);
 		});
 		it("png", function() {
-			mime(IMAGES.PNG.PATH).should.equal(CONST.MIME.PNG);
+			fileMime(IMAGES.PNG.PATH).should.equal(CONST.MIME.PNG);
 		});
 	});
 	
 	describe("get image mime from file buffer", function() {
 		it("bmp", function() {
-			mime(IMAGES.BMP.BUFFER).should.equal(CONST.MIME.BMP);
+			fileMime(IMAGES.BMP.BUFFER).should.equal(CONST.MIME.BMP);
 		});
 		it("jpg", function() {
-			mime(IMAGES.JPG.BUFFER).should.equal(CONST.MIME.JPG);
+			fileMime(IMAGES.JPG.BUFFER).should.equal(CONST.MIME.JPG);
 		});
 		it("png", function() {
-			mime(IMAGES.PNG.BUFFER).should.equal(CONST.MIME.PNG);
+			fileMime(IMAGES.PNG.BUFFER).should.equal(CONST.MIME.PNG);
 		});
 	});
 	
 	describe("handle exception, throw or return an empty string", function() {
 		it("throw when provided param that is NOT a file buffer or path", function() {
 			(function() {
-				mime();
+				fileMime();
 			}).should.throw();
 			(function() {
-				mime(null);
+				fileMime(null);
 			}).should.throw();
 			(function() {
-				mime(true);
+				fileMime(true);
 			}).should.throw();
 			(function() {
-				mime(123);
+				fileMime(123);
 			}).should.throw();
 			(function() {
-				mime({});
+				fileMime({});
 			}).should.throw();
 			(function() {
-				mime([]);
+				fileMime([]);
 			}).should.throw();
 		});
 		it("throw when provided a file path that does not exist", function() {
 			(function() {
-				mime("hello/i/do/NOT.exist");
+				fileMime("hello/i/do/NOT.exist");
 			}).should.throw();
 		});
 		it("return an empty string when the file does NOT have mime type", function() {
-			mime(PATH_TEST_JS).should.equal("");
+			fileMime(PATH_TEST_JS).should.equal("");
 		});
 	});
 });
@@ -151,6 +155,38 @@ describe("bitmap parse", function() {
 			(function() {
 				bitmapParse(PATH_TEST_JS);
 			}).should.throw();
+		});
+	});
+});
+
+describe("bitmap unparse - promise", function() {
+	describe("unparse from bitmap to file buffer which can be saved", function() {
+		it("bmp", done => {
+			let what = IMAGES.BMP;
+			
+			bitmapUnparse(bitmapParse(what.BUFFER)).then(buffer => {
+				Buffer.isBuffer(buffer).should.equal(true);
+				fileSave(buffer, what.PATH_SAVE);
+				done();
+			}, done);
+		});
+		it("jpg", done => {
+			let what = IMAGES.JPG;
+			
+			bitmapUnparse(bitmapParse(what.BUFFER)).then(buffer => {
+				Buffer.isBuffer(buffer).should.equal(true);
+				fileSave(buffer, what.PATH_SAVE);
+				done();
+			}, done);
+		});
+		it("png", done => {
+			let what = IMAGES.PNG;
+			
+			bitmapUnparse(bitmapParse(what.BUFFER)).then(buffer => {
+				Buffer.isBuffer(buffer).should.equal(true);
+				fileSave(buffer, what.PATH_SAVE);
+				done();
+			}, done);
 		});
 	});
 });
