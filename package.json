@@ -1,43 +1,44 @@
 {
-  "name": "nomage",
-  "version": "1.0.0",
-  "description": "node-image stuff without using native dependencies, inspired by jimp",
-  "main": "index.js",
-  "scripts": {
-    "start": "./node_modules/.bin/babel -w src/ -d build",
-    "test": "NODE_ENV=test npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 60000",
-    "build": "./node_modules/.bin/babel src/ -d build"
-  },
-  "keywords": [
-    "node",
-    "image"
-  ],
-  "author": "justnewbee@gmail.com",
-  "license": "MIT",
-  "dependencies": {
-    "babel-runtime": "^6.18.0",
-    "bignumber.js": "^3.0.1",
-    "exif-parser": "^0.1.9",
-    "file-type": "^3.9.0",
-    "jpeg-js": "^0.2.0",
-    "load-bmfont": "^1.2.3",
-    "mime": "^1.3.4",
-    "pixelmatch": "^4.0.0",
-    "pngjs": "^3.0.0",
-    "request": "^2.65.0",
-    "stream-to-buffer": "^0.1.0",
-    "tinycolor2": "^1.1.2"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.18.0",
-    "babel-core": "^6.18.2",
-    "babel-istanbul": "^0.11.0",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-plugin-transform-runtime": "^6.15.0",
-    "babel-polyfill": "^6.16.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-stage-0": "^6.16.0",
-    "mocha": "^3.2.0",
-    "should": "^11.1.1"
-  }
+	"name": "nomage",
+	"version": "1.0.0",
+	"description": "node-image stuff without using native dependencies, inspired by jimp",
+	"main": "index.js",
+	"scripts": {
+		"start": "./node_modules/.bin/babel -w src/ -d build",
+		"test": "NODE_ENV=test npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 60000",
+		"test-no-cover": "NODE_ENV=test npm run build && mocha --require babel-polyfill --compilers js:babel-core/register --timeout 20000",
+		"build": "./node_modules/.bin/babel src/ -d build"
+	},
+	"keywords": [
+		"node",
+		"image"
+	],
+	"author": "justnewbee@gmail.com",
+	"license": "MIT",
+	"dependencies": {
+		"babel-runtime": "^6.18.0",
+		"bignumber.js": "^3.0.1",
+		"exif-parser": "^0.1.9",
+		"file-type": "^3.9.0",
+		"jpeg-js": "^0.2.0",
+		"load-bmfont": "^1.2.3",
+		"mime": "^1.3.4",
+		"pixelmatch": "^4.0.0",
+		"pngjs": "^3.0.0",
+		"request": "^2.65.0",
+		"stream-to-buffer": "^0.1.0",
+		"tinycolor2": "^1.1.2"
+	},
+	"devDependencies": {
+		"babel-cli": "^6.18.0",
+		"babel-core": "^6.18.2",
+		"babel-istanbul": "^0.11.0",
+		"babel-plugin-add-module-exports": "^0.2.1",
+		"babel-plugin-transform-runtime": "^6.15.0",
+		"babel-polyfill": "^6.16.0",
+		"babel-preset-es2015": "^6.18.0",
+		"babel-preset-stage-0": "^6.16.0",
+		"mocha": "^3.2.0",
+		"should": "^11.1.1"
+	}
 }

@@ -22,6 +22,7 @@
 //   in PostScript Level 2, Technical Note #5116
 //   (partners.adobe.com/public/developer/en/ps/sdk/5116.DCT_Filter.pdf)
 import JPG from "./const";
+import {each, bitShiftL, bitShiftR, bitAnd, bitOr} from "./util";
 
 const dctZigZag = new Int32Array([
 	0,
@@ -50,24 +51,31 @@ const dctSqrt2 = 5793; // sqrt(2)
 const dctSqrt1d2 = 2896; // sqrt(2) / 2
 
 /**
- * 
- * @param {Object} o
- * @param {Function} fn
+ * 从 Uint8Array 的 offset 开始读取两个字节
+ * @param {Uint8Array} arrUInt8
+ * @param {Integer} offset
+ * @return {Integer}
  */
-function each(o, fn) {
-	for (let k in o) {
-		if (o.hasOwnProperty(k)) {
-			fn(o[k], k);
-		}
-	}
+function getUInit16(arrUInt8, offset) {
+	return bitOr(bitShiftL(arrUInt8[offset], 8), arrUInt8[offset + 1]);
+}
+/**
+ * 
+ * @param {Uint8Array} arrUInt8
+ * @param {Integer} offset
+ * @return {Uint8Array}
+ */
+function getDataBlock(arrUInt8, offset) {
+	let len = getUInit16(arrUInt8, offset);
+	return arrUInt8.subarray(offset + 2, offset + len);
 }
 
 function buildHuffmanTable(codeLengths, values) {
-	var code = [];
-	var length = 16;
-	var i;
-	var j;
-	var k = 0;
+	let code = [];
+	let length = 16;
+	let i;
+	let j;
+	let k = 0;
 	
 	while (length > 0 && !codeLengths[length - 1]) {
 		length--;
@@ -77,8 +85,8 @@ function buildHuffmanTable(codeLengths, values) {
 		index: 0
 	});
 	
-	var p = code[0];
-	var q;
+	let p = code[0];
+	let q;
 	
 	for (i = 0; i < length; i++) {
 		for (j = 0; j < codeLengths[i]; j++) {
@@ -113,37 +121,37 @@ function buildHuffmanTable(codeLengths, values) {
 }
 
 function decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, successivePrev, successive) {
-	var mcusPerLine = frame.mcusPerLine;
-	var progressive = frame.progressive;
-	var startOffset = offset;
-	var bitsData = 0;
-	var bitsCount = 0;
-	var eobrun = 0;
-	var successiveACState = 0;
-	var successiveACNextValue;
-	var componentsLength = components.length;
-	var component;
-	var mcu = 0;
-	var marker;
-	var mcuExpected;
-	var decodeFn;
-	var i;
-	var j;
-	var k;
-	var n;
-	var h;
-	var v;
+	let mcusPerLine = frame.mcusPerLine;
+	let progressive = frame.progressive;
+	let startOffset = offset;
+	let bitsData = 0;
+	let bitsCount = 0;
+	let eobrun = 0;
+	let successiveACState = 0;
+	let successiveACNextValue;
+	let componentsLength = components.length;
+	let component;
+	let mcu = 0;
+	let marker;
+	let mcuExpected;
+	let decodeFn;
+	let i;
+	let j;
+	let k;
+	let n;
+	let h;
+	let v;
 	
 	function readBit() {
 		if (bitsCount > 0) {
 			bitsCount--;
-			return shiftR(bitsData, bitsCount) & 1;
+			return bitAnd(bitShiftR(bitsData, bitsCount), 1);
 		}
 		bitsData = data[offset++];
 		if (bitsData == 0xFF) {
-			var nextByte = data[offset++];
+			let nextByte = data[offset++];
 			if (nextByte) {
-				throw new Error(`unexpected marker: ${(shiftL(bitsData, 8) | nextByte).toString(16)}`);
+				throw new Error(`unexpected marker: ${bitOr(bitShiftL(bitsData, 8), nextByte).toString(16)}`);
 			}
 		}
 		bitsCount = 7;
@@ -151,8 +159,8 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function decodeHuffman(tree) {
-		var node = tree;
-		var bit;
+		let node = tree;
+		let bit;
 		
 		while ((bit = readBit()) !== null) {
 			node = node[bit];
@@ -167,37 +175,37 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function receive(length) {
-		var n = 0;
+		let n = 0;
 		while (length > 0) {
-			var bit = readBit();
+			let bit = readBit();
 			if (bit === null) {
 				return;
 			}
-			n = shiftL(n, 1) | bit;
+			n = bitOr(bitShiftL(n, 1), bit);
 			length--;
 		}
 		return n;
 	}
 	
 	function receiveAndExtend(length) {
-		var n = receive(length);
-		if (n >= shiftL(1, length - 1)) {
+		let n = receive(length);
+		if (n >= bitShiftL(1, length - 1)) {
 			return n;
 		}
-		return n + shiftL(-1, length) + 1;
+		return n + bitShiftL(-1, length) + 1;
 	}
 	
 	function decodeBaseline(component, zz) {
-		var t = decodeHuffman(component.huffmanTableDC);
-		var diff = t === 0 ? 0 : receiveAndExtend(t);
+		let t = decodeHuffman(component.huffmanTableDC);
+		let diff = t === 0 ? 0 : receiveAndExtend(t);
 		
 		zz[0] = (component.pred += diff);
 		
 		k = 1;
 		while (k < 64) {
-			var rs = decodeHuffman(component.huffmanTableAC);
-			var s = rs & 15;
-			var r = shiftR(rs, 4);
+			let rs = decodeHuffman(component.huffmanTableAC);
+			let s = bitAnd(rs, 15);
+			let r = bitShiftR(rs, 4);
 			
 			if (s === 0) {
 				if (r < 15) {
@@ -214,14 +222,14 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function decodeDCFirst(component, zz) {
-		var t = decodeHuffman(component.huffmanTableDC);
-		var diff = t === 0 ? 0 : shiftL(receiveAndExtend(t), successive);
+		let t = decodeHuffman(component.huffmanTableDC);
+		let diff = t === 0 ? 0 : bitShiftL(receiveAndExtend(t), successive);
 		
 		zz[0] = (component.pred += diff);
 	}
 	
 	function decodeDCSuccessive(component, zz) {
-		zz[0] |= shiftL(readBit(), successive);
+		zz[0] |= bitShiftL(readBit(), successive);
 	}
 	
 	function decodeACFirst(component, zz) {
@@ -231,44 +239,45 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 		}
 		k = spectralStart;
 		
-		var e = spectralEnd;
+		let e = spectralEnd;
 		
 		while (k <= e) {
-			var rs = decodeHuffman(component.huffmanTableAC);
-			var s = rs & 15;
-			var r = shiftR(rs, 4);
+			let rs = decodeHuffman(component.huffmanTableAC);
+			let s = bitAnd(rs, 15);
+			let r = bitShiftR(rs, 4);
 			
 			if (s === 0) {
 				if (r < 15) {
-					eobrun = receive(r) + shiftL(1, r) - 1;
+					eobrun = receive(r) + bitShiftL(1, r) - 1;
 					break;
 				}
 				k += 16;
 				continue;
 			}
 			k += r;
-			var z = dctZigZag[k];
-			zz[z] = receiveAndExtend(s) * shiftL(1, successive);
+			
+			zz[dctZigZag[k]] = receiveAndExtend(s) * bitShiftL(1, successive);
+			
 			k++;
 		}
 	}
 	
 	function decodeACSuccessive(component, zz) {
 		k = spectralStart;
-		var e = spectralEnd;
+		let e = spectralEnd;
 		
 		while (k <= e) {
-			var z = dctZigZag[k];
+			let z = dctZigZag[k];
 			
 			switch (successiveACState) {
 			case 0: // initial state
-				var rs = decodeHuffman(component.huffmanTableAC);
-				var s = rs & 15;
-				var r = shiftR(rs, 4);
+				let rs = decodeHuffman(component.huffmanTableAC);
+				let s = bitAnd(rs, 15);
+				let r = bitShiftR(rs, 4);
 				
 				if (s === 0) {
 					if (r < 15) {
-						eobrun = receive(r) + shiftL(1, r);
+						eobrun = receive(r) + bitShiftL(1, r);
 						successiveACState = 4;
 					} else {
 						r = 16;
@@ -285,7 +294,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 			case 1: // skipping r zero items
 			case 2:
 				if (zz[z]) {
-					zz[z] += shiftL(readBit(), successive);
+					zz[z] += bitShiftL(readBit(), successive);
 				} else {
 					r--;
 					if (r === 0) {
@@ -295,15 +304,15 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 				break;
 			case 3: // set value for a zero item
 				if (zz[z]) {
-					zz[z] += shiftL(readBit(), successive);
+					zz[z] += bitShiftL(readBit(), successive);
 				} else {
-					zz[z] = shiftL(successiveACNextValue, successive);
+					zz[z] = bitShiftL(successiveACNextValue, successive);
 					successiveACState = 0;
 				}
 				break;
 			case 4: // eob
 				if (zz[z]) {
-					zz[z] += shiftL(readBit(), successive);
+					zz[z] += bitShiftL(readBit(), successive);
 				}
 				break;
 			}
@@ -319,16 +328,18 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function decodeMcu(component, decode, mcu, row, col) {
-		var mcuRow = (mcu / mcusPerLine) | 0;
-		var mcuCol = mcu % mcusPerLine;
-		var blockRow = mcuRow * component.v + row;
-		var blockCol = mcuCol * component.h + col;
+		let mcuRow = bitOr(mcu / mcusPerLine, 0);
+		let mcuCol = mcu % mcusPerLine;
+		let blockRow = mcuRow * component.v + row;
+		let blockCol = mcuCol * component.h + col;
+		
 		decode(component, component.blocks[blockRow][blockCol]);
 	}
 	
 	function decodeBlock(component, decode, mcu) {
-		var blockRow = (mcu / component.blocksPerLine) | 0;
-		var blockCol = mcu % component.blocksPerLine;
+		let blockRow = bitOr(mcu / component.blocksPerLine, 0);
+		let blockCol = mcu % component.blocksPerLine;
+		
 		decode(component, component.blocks[blockRow][blockCol]);
 	}
 	
@@ -387,7 +398,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 		
 		// find marker
 		bitsCount = 0;
-		marker = shiftL(data[offset], 8) | data[offset + 1];
+		marker = bitOr(bitShiftL(data[offset], 8), data[offset + 1]);
 		if (marker < 0xFF00) {
 			throw new Error("marker was not found");
 		}
@@ -403,14 +414,14 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 }
 
 function buildComponentData(frame, component) {
-	var lines = [];
-	var blocksPerLine = component.blocksPerLine;
-	var blocksPerColumn = component.blocksPerColumn;
-	var samplesPerLine = shiftL(blocksPerLine, 3);
-	var R = new Int32Array(64);
-	var r = new Uint8Array(64);
-	var i;
-	var j;
+	let lines = [];
+	let blocksPerLine = component.blocksPerLine;
+	let blocksPerColumn = component.blocksPerColumn;
+	let samplesPerLine = bitShiftL(blocksPerLine, 3);
+	let R = new Int32Array(64);
+	let r = new Uint8Array(64);
+	let i;
+	let j;
 	
 	// A port of poppler's IDCT method which in turn is taken from:
 	//   Christoph Loeffler, Adriaan Ligtenberg, George S. Moschytz,
@@ -418,17 +429,17 @@ function buildComponentData(frame, component) {
 	//   IEEE Intl. Conf. on Acoustics, Speech & Signal Processing, 1989,
 	//   988-991.
 	function quantizeAndInverse(zz, dataOut, dataIn) {
-		var qt = component.quantizationTable;
-		var v0;
-		var v1;
-		var v2;
-		var v3;
-		var v4;
-		var v5;
-		var v6;
-		var v7;
-		var t;
-		var p = dataIn;
+		let qt = component.quantizationTable;
+		let p = dataIn;
+		let v0;
+		let v1;
+		let v2;
+		let v3;
+		let v4;
+		let v5;
+		let v6;
+		let v7;
+		let t;
 		
 		// dequant
 		for (i = 0; i < 64; i++) {
@@ -437,11 +448,11 @@ function buildComponentData(frame, component) {
 		
 		// inverse DCT on rows
 		for (i = 0; i < 8; ++i) {
-			var row = 8 * i;
+			let row = 8 * i;
 			
 			// check for all-zero AC coefficients
 			if (p[row + 1] == 0 && p[row + 2] == 0 && p[row + 3] == 0 && p[row + 4] == 0 && p[row + 5] == 0 && p[row + 6] == 0 && p[row + 7] == 0) {
-				t = shiftR(dctSqrt2 * p[row] + 512, 10);
+				t = bitShiftR(dctSqrt2 * p[row] + 512, 10);
 				p[row] = t;
 				p[row + 1] = t;
 				p[row + 2] = t;
@@ -454,41 +465,41 @@ function buildComponentData(frame, component) {
 			}
 			
 			// stage 4
-			v0 = shiftR(dctSqrt2 * p[row] + 128, 8);
-			v1 = shiftR(dctSqrt2 * p[row + 4] + 128, 8);
+			v0 = bitShiftR(dctSqrt2 * p[row] + 128, 8);
+			v1 = bitShiftR(dctSqrt2 * p[row + 4] + 128, 8);
 			v2 = p[row + 2];
 			v3 = p[row + 6];
-			v4 = shiftR(dctSqrt1d2 * (p[row + 1] - p[row + 7]) + 128, 8);
-			v7 = shiftR(dctSqrt1d2 * (p[row + 1] + p[row + 7]) + 128, 8);
-			v5 = shiftL(p[row + 3], 4);
-			v6 = shiftL(p[row + 5], 4);
+			v4 = bitShiftR(dctSqrt1d2 * (p[row + 1] - p[row + 7]) + 128, 8);
+			v7 = bitShiftR(dctSqrt1d2 * (p[row + 1] + p[row + 7]) + 128, 8);
+			v5 = bitShiftL(p[row + 3], 4);
+			v6 = bitShiftL(p[row + 5], 4);
 			
 			// stage 3
-			t = shiftR(v0 - v1 + 1, 1);
-			v0 = shiftR(v0 + v1 + 1, 1);
+			t = bitShiftR(v0 - v1 + 1, 1);
+			v0 = bitShiftR(v0 + v1 + 1, 1);
 			v1 = t;
-			t = shiftR(v2 * dctSin6 + v3 * dctCos6 + 128, 8);
-			v2 = shiftR(v2 * dctCos6 - v3 * dctSin6 + 128, 8);
+			t = bitShiftR(v2 * dctSin6 + v3 * dctCos6 + 128, 8);
+			v2 = bitShiftR(v2 * dctCos6 - v3 * dctSin6 + 128, 8);
 			v3 = t;
-			t = shiftR(v4 - v6 + 1, 1);
-			v4 = shiftR(v4 + v6 + 1, 1);
+			t = bitShiftR(v4 - v6 + 1, 1);
+			v4 = bitShiftR(v4 + v6 + 1, 1);
 			v6 = t;
-			t = shiftR(v7 + v5 + 1, 1);
-			v5 = shiftR(v7 - v5 + 1, 1);
+			t = bitShiftR(v7 + v5 + 1, 1);
+			v5 = bitShiftR(v7 - v5 + 1, 1);
 			v7 = t;
 			
 			// stage 2
-			t = shiftR(v0 - v3 + 1, 1);
-			v0 = shiftR(v0 + v3 + 1, 1);
+			t = bitShiftR(v0 - v3 + 1, 1);
+			v0 = bitShiftR(v0 + v3 + 1, 1);
 			v3 = t;
-			t = shiftR(v1 - v2 + 1, 1);
-			v1 = shiftR(v1 + v2 + 1, 1);
+			t = bitShiftR(v1 - v2 + 1, 1);
+			v1 = bitShiftR(v1 + v2 + 1, 1);
 			v2 = t;
-			t = shiftR(v4 * dctSin3 + v7 * dctCos3 + 2048, 12);
-			v4 = shiftR(v4 * dctCos3 - v7 * dctSin3 + 2048, 12);
+			t = bitShiftR(v4 * dctSin3 + v7 * dctCos3 + 2048, 12);
+			v4 = bitShiftR(v4 * dctCos3 - v7 * dctSin3 + 2048, 12);
 			v7 = t;
-			t = shiftR(v5 * dctSin1 + v6 * dctCos1 + 2048, 12);
-			v5 = shiftR(v5 * dctCos1 - v6 * dctSin1 + 2048, 12);
+			t = bitShiftR(v5 * dctSin1 + v6 * dctCos1 + 2048, 12);
+			v5 = bitShiftR(v5 * dctCos1 - v6 * dctSin1 + 2048, 12);
 			v6 = t;
 			
 			// stage 1
@@ -504,11 +515,11 @@ function buildComponentData(frame, component) {
 		
 		// inverse DCT on columns
 		for (i = 0; i < 8; ++i) {
-			var col = i;
+			let col = i;
 			
 			// check for all-zero AC coefficients
 			if (p[col + 8] == 0 && p[col + 8 * 2] == 0 && p[col + 8 * 3] == 0 && p[col + 8 * 4] == 0 && p[col + 8 * 5] == 0 && p[col + 8 * 6] == 0 && p[col + 8 * 7] == 0) {
-				t = shiftR(dctSqrt2 * dataIn[i] + 8192, 14);
+				t = bitShiftR(dctSqrt2 * dataIn[i] + 8192, 14);
 				p[col] = t;
 				p[col + 8] = t;
 				p[col + 8 * 2] = t;
@@ -521,41 +532,41 @@ function buildComponentData(frame, component) {
 			}
 			
 			// stage 4
-			v0 = shiftR(dctSqrt2 * p[col] + 2048, 12);
-			v1 = shiftR(dctSqrt2 * p[col + 8 * 4] + 2048, 12);
+			v0 = bitShiftR(dctSqrt2 * p[col] + 2048, 12);
+			v1 = bitShiftR(dctSqrt2 * p[col + 8 * 4] + 2048, 12);
 			v2 = p[col + 8 * 2];
 			v3 = p[col + 8 * 6];
-			v4 = shiftR(dctSqrt1d2 * (p[col + 8] - p[col + 8 * 7]) + 2048, 12);
-			v7 = shiftR(dctSqrt1d2 * (p[col + 8] + p[col + 8 * 7]) + 2048, 12);
+			v4 = bitShiftR(dctSqrt1d2 * (p[col + 8] - p[col + 8 * 7]) + 2048, 12);
+			v7 = bitShiftR(dctSqrt1d2 * (p[col + 8] + p[col + 8 * 7]) + 2048, 12);
 			v5 = p[col + 8 * 3];
 			v6 = p[col + 8 * 5];
 			
 			// stage 3
-			t = shiftR(v0 - v1 + 1, 1);
-			v0 = shiftR(v0 + v1 + 1, 1);
+			t = bitShiftR(v0 - v1 + 1, 1);
+			v0 = bitShiftR(v0 + v1 + 1, 1);
 			v1 = t;
-			t = shiftR(v2 * dctSin6 + v3 * dctCos6 + 2048, 12);
-			v2 = shiftR(v2 * dctCos6 - v3 * dctSin6 + 2048, 12);
+			t = bitShiftR(v2 * dctSin6 + v3 * dctCos6 + 2048, 12);
+			v2 = bitShiftR(v2 * dctCos6 - v3 * dctSin6 + 2048, 12);
 			v3 = t;
-			t = shiftR(v4 - v6 + 1, 1);
-			v4 = shiftR(v4 + v6 + 1, 1);
+			t = bitShiftR(v4 - v6 + 1, 1);
+			v4 = bitShiftR(v4 + v6 + 1, 1);
 			v6 = t;
-			t = shiftR(v7 + v5 + 1, 1);
-			v5 = shiftR(v7 - v5 + 1, 1);
+			t = bitShiftR(v7 + v5 + 1, 1);
+			v5 = bitShiftR(v7 - v5 + 1, 1);
 			v7 = t;
 			
 			// stage 2
-			t = shiftR(v0 - v3 + 1, 1);
-			v0 = shiftR(v0 + v3 + 1, 1);
+			t = bitShiftR(v0 - v3 + 1, 1);
+			v0 = bitShiftR(v0 + v3 + 1, 1);
 			v3 = t;
-			t = shiftR(v1 - v2 + 1, 1);
-			v1 = shiftR(v1 + v2 + 1, 1);
+			t = bitShiftR(v1 - v2 + 1, 1);
+			v1 = bitShiftR(v1 + v2 + 1, 1);
 			v2 = t;
-			t = shiftR(v4 * dctSin3 + v7 * dctCos3 + 2048, 12);
-			v4 = shiftR(v4 * dctCos3 - v7 * dctSin3 + 2048, 12);
+			t = bitShiftR(v4 * dctSin3 + v7 * dctCos3 + 2048, 12);
+			v4 = bitShiftR(v4 * dctCos3 - v7 * dctSin3 + 2048, 12);
 			v7 = t;
-			t = shiftR(v5 * dctSin1 + v6 * dctCos1 + 2048, 12);
-			v5 = shiftR(v5 * dctCos1 - v6 * dctSin1 + 2048, 12);
+			t = bitShiftR(v5 * dctSin1 + v6 * dctCos1 + 2048, 12);
+			v5 = bitShiftR(v5 * dctCos1 - v6 * dctSin1 + 2048, 12);
 			v6 = t;
 			
 			// stage 1
@@ -571,24 +582,24 @@ function buildComponentData(frame, component) {
 		
 		// convert to 8-bit integers
 		for (i = 0; i < 64; ++i) {
-			var sample = 128 + shiftR(p[i] + 8, 4);
+			let sample = 128 + bitShiftR(p[i] + 8, 4);
 			dataOut[i] = sample < 0 ? 0 : sample > 0xFF ? 0xFF : sample;
 		}
 	}
 	
-	for (var blockRow = 0; blockRow < blocksPerColumn; blockRow++) {
-		var scanLine = shiftL(blockRow, 3);
+	for (let blockRow = 0; blockRow < blocksPerColumn; blockRow++) {
+		let scanLine = bitShiftL(blockRow, 3);
 		for (i = 0; i < 8; i++) {
 			lines.push(new Uint8Array(samplesPerLine));
 		}
-		for (var blockCol = 0; blockCol < blocksPerLine; blockCol++) {
+		for (let blockCol = 0; blockCol < blocksPerLine; blockCol++) {
 			quantizeAndInverse(component.blocks[blockRow][blockCol], r, R);
 			
-			var offset = 0;
-			var sample = shiftL(blockCol, 3);
+			let offset = 0;
+			let sample = bitShiftL(blockCol, 3);
 			
 			for (j = 0; j < 8; j++) {
-				var line = lines[scanLine + j];
+				let line = lines[scanLine + j];
 				for (i = 0; i < 8; i++) {
 					line[sample + i] = r[offset++];
 				}
@@ -618,8 +629,8 @@ function prepareComponents(frame) {
 		}
 	});
 	
-	var mcusPerLine = Math.ceil(frame.samplesPerLine / 8 / maxH);
-	var mcusPerColumn = Math.ceil(frame.scanLines / 8 / maxV);
+	let mcusPerLine = Math.ceil(frame.samplesPerLine / 8 / maxH);
+	let mcusPerColumn = Math.ceil(frame.scanLines / 8 / maxV);
 	
 	each(frame.components, v => {
 		let blocksPerLine = Math.ceil(Math.ceil(frame.samplesPerLine / 8) * v.h / maxH);
@@ -629,7 +640,7 @@ function prepareComponents(frame) {
 		let blocks = [];
 		
 		for (i = 0; i < blocksPerColumnForMcu; i++) {
-			var row = [];
+			let row = [];
 			for (j = 0; j < blocksPerLineForMcu; j++) {
 				row.push(new Int32Array(64));
 			}
@@ -648,76 +659,41 @@ function prepareComponents(frame) {
 }
 
 /**
- * bitwise left shift
- * @param {Integer} num
- * @param {Integer} n
- */
-function shiftL(num, n) {
-	return num << n;
-}
-/**
- * bitwise right shift
- * @param {Integer} num
- * @param {Integer} n
- * @return {Integer}
- */
-function shiftR(num, n) {
-	return num >> n;
-}
-/**
- * 从 Uint8Array 的 offset 开始读取两个字节
- * @param {Uint8Array} arrUInt8
- * @param {Integer} offset
- * @return {Integer}
- */
-function getUInit16(arrUInt8, offset) {
-	return shiftL(arrUInt8[offset], 8) | arrUInt8[offset + 1];
-}
-/**
- * 
- * @param {Uint8Array} arrUInt8
- * @param {Integer} offset
- * @return {Uint8Array}
- */
-function getDataBlock(arrUInt8, offset) {
-	let len = getUInit16(arrUInt8, offset);
-	return arrUInt8.subarray(offset + 2, offset + len);
-}
-
-/**
- * 
+ * when the marker is JPG.APP0, do it
+ * JFIF = // JPEG File Interchange Format - https://www.w3.org/Graphics/JPEG/jfif3.pdf
  * @param {Uint8Array} arrAppData
- * @param {Integer} fileMarker
+ * @return {Object} or undefined
  */
-function parseAppData(arrAppData, fileMarker) {
-	if (fileMarker === JPG.APP0) {
-		if (arrAppData[0] === 0x4A && arrAppData[1] === 0x46 && arrAppData[2] === 0x49 && arrAppData[3] === 0x46 && arrAppData[4] === 0) { // 'JFIF\x00'
-			return ["JFIF", { // JPEG File Interchange Format - https://www.w3.org/Graphics/JPEG/jfif3.pdf
-				version: {
-					major: arrAppData[5],
-					minor: arrAppData[6]
-				},
-				densityUnits: arrAppData[7],
-				xDensity: shiftL(arrAppData[8], 8) | arrAppData[9],
-				yDensity: shiftL(arrAppData[10], 8) | arrAppData[11],
-				thumbWidth: arrAppData[12],
-				thumbHeight: arrAppData[13],
-				thumbData: arrAppData.subarray(14, 14 + 3 * arrAppData[12] * arrAppData[13])
-			}];
-		}
+function parseAppJFIF(arrAppData) {
+	if (arrAppData[0] === 0x4A && arrAppData[1] === 0x46 && arrAppData[2] === 0x49 && arrAppData[3] === 0x46 && arrAppData[4] === 0) { // 'JFIF\x00'
+		return { 
+			version: {
+				major: arrAppData[5],
+				minor: arrAppData[6]
+			},
+			densityUnits: arrAppData[7],
+			xDensity: bitOr(bitShiftL(arrAppData[8], 8), arrAppData[9]),
+			yDensity: bitOr(bitShiftL(arrAppData[10], 8), arrAppData[11]),
+			thumbWidth: arrAppData[12],
+			thumbHeight: arrAppData[13],
+			thumbData: arrAppData.subarray(14, 14 + 3 * arrAppData[12] * arrAppData[13])
+		};
 	}
-	
-	// TODO APP1 - Exif
-	
-	if (fileMarker === JPG.APP14) {
-		if (arrAppData[0] === 0x41 && arrAppData[1] === 0x64 && arrAppData[2] === 0x6F && arrAppData[3] === 0x62 && arrAppData[4] === 0x65 && arrAppData[5] === 0) { // 'Adobe\x00'
-			return ["ADOBE", {
-				version: arrAppData[6],
-				flags0: shiftL(arrAppData[7], 8) | arrAppData[8],
-				flags1: shiftL(arrAppData[9], 8) | arrAppData[10],
-				transformCode: arrAppData[11]
-			}];
-		}
+}
+/**
+ * do it when marker is JPG.APP14
+ * adobe info
+ * @param {Uint8Array} arrAppData
+ * @return {Object} or undefined
+ */
+function parseAppADOBE(arrAppData) {
+	if (arrAppData[0] === 0x41 && arrAppData[1] === 0x64 && arrAppData[2] === 0x6F && arrAppData[3] === 0x62 && arrAppData[4] === 0x65 && arrAppData[5] === 0) { // 'Adobe\x00'
+		return {
+			version: arrAppData[6],
+			flags0: bitOr(bitShiftL(arrAppData[7], 8), arrAppData[8]),
+			flags1: bitOr(bitShiftL(arrAppData[9], 8), arrAppData[10]),
+			transformCode: arrAppData[11]
+		};
 	}
 }
 
@@ -725,9 +701,7 @@ class JpegImage {
 	constructor(buffer) {
 		let data = new Uint8Array(buffer);
 		
-		let jfif = null;
-		let adobe = null;
-		var offset = 0;
+		let offset = 0;
 		let frame;
 		let resetInterval;
 		let quantizationTables = [];
@@ -740,18 +714,17 @@ class JpegImage {
 		
 		// if NOT assigned to a variable means skipping the data
 		function readUInt16() {
-			let value = shiftL(data[offset], 8) | data[offset + 1];
+			let value = getUInit16(data, offset);
 			
 			offset += 2;
 			return value;
 		}
 		function readDataBlock() {
-			let length = readUInt16();
-			let array = data.subarray(offset, offset + length - 2);
+			let arr = getDataBlock(data, offset);
 			
-			offset += array.length;
+			offset += arr.length + 2;
 			
-			return array;
+			return arr;
 		}
 		
 		fileMarker = readUInt16();
@@ -766,7 +739,6 @@ class JpegImage {
 			switch (fileMarker) {
 			case 0xFF00:
 				break;
-			case JPG.APP0:
 			case JPG.APP1:
 			case JPG.APP2:
 			case JPG.APP3:
@@ -780,60 +752,35 @@ class JpegImage {
 			case JPG.APP11:
 			case JPG.APP12:
 			case JPG.APP13:
-			case JPG.APP14:
 			case JPG.APP15:
 			case JPG.CMT:
-				var appData = readDataBlock();
-				
-				if (fileMarker === JPG.APP0) {
-					if (appData[0] === 0x4A && appData[1] === 0x46 && appData[2] === 0x49 && appData[3] === 0x46 && appData[4] === 0) { // 'JFIF\x00'
-						jfif = {
-							version: {
-								major: appData[5],
-								minor: appData[6]
-							},
-							densityUnits: appData[7],
-							xDensity: shiftL(appData[8], 8) | appData[9],
-							yDensity: shiftL(appData[10], 8) | appData[11],
-							thumbWidth: appData[12],
-							thumbHeight: appData[13],
-							thumbData: appData.subarray(14, 14 + 3 * appData[12] * appData[13])
-						};
-					}
-				}
-				
-				// TODO APP1 - Exif
-				
-				if (fileMarker === JPG.APP14) {
-					if (appData[0] === 0x41 && appData[1] === 0x64 && appData[2] === 0x6F && appData[3] === 0x62 && appData[4] === 0x65 && appData[5] === 0) { // 'Adobe\x00'
-						adobe = {
-							version: appData[6],
-							flags0: shiftL(appData[7], 8) | appData[8],
-							flags1: shiftL(appData[9], 8) | appData[10],
-							transformCode: appData[11]
-						};
-					}
-				}
+				readDataBlock(); // read and ignore TODO APP1 - Exif
+				break;
+			case JPG.APP0:
+				this.JFIF = parseAppJFIF(readDataBlock());
+				break;
+			case JPG.APP14:
+				this.ADOBE = parseAppADOBE(readDataBlock());
 				break;
 			case JPG.DQT:
-				var quantizationTablesLength = readUInt16();
-				var quantizationTablesEnd = quantizationTablesLength + offset - 2;
+				let quantizationTablesLength = readUInt16();
+				let quantizationTablesEnd = quantizationTablesLength + offset - 2;
 				
 				while (offset < quantizationTablesEnd) {
-					var quantizationTableSpec = data[offset++];
-					var tableData = new Int32Array(64);
-					if (shiftR(quantizationTableSpec, 4) === 0) { // 8 bit values
+					let quantizationTableSpec = data[offset++];
+					let tableData = new Int32Array(64);
+					if (bitShiftR(quantizationTableSpec, 4) === 0) { // 8 bit values
 						for (j = 0; j < 64; j++) {
 							tableData[dctZigZag[j]] = data[offset++];
 						}
-					} else if (shiftR(quantizationTableSpec, 4) === 1) { // 16 bit
+					} else if (bitShiftR(quantizationTableSpec, 4) === 1) { // 16 bit
 						for (j = 0; j < 64; j++) {
 							tableData[dctZigZag[j]] = readUInt16();
 						}
 					} else {
 						throw new Error("DQT: invalid table spec");
 					}
-					quantizationTables[quantizationTableSpec & 15] = tableData;
+					quantizationTables[bitAnd(quantizationTableSpec, 15)] = tableData;
 				}
 				break;
 			case JPG.SOF0:
@@ -851,14 +798,15 @@ class JpegImage {
 					componentsOrder: []
 				};
 				
-				var componentsCount = data[offset++];
-				var componentId;
+				let componentsCount = data[offset++];
+				let componentId;
 				
 				for (i = 0; i < componentsCount; i++) {
 					componentId = data[offset];
-					var h = shiftR(data[offset + 1], 4);
-					var v = data[offset + 1] & 15;
-					var qId = data[offset + 2];
+					let h = bitShiftR(data[offset + 1], 4);
+					let v = bitAnd(data[offset + 1], 15);
+					let qId = data[offset + 2];
+					
 					frame.componentsOrder.push(componentId);
 					frame.components[componentId] = {
 						h: h,
@@ -871,21 +819,21 @@ class JpegImage {
 				frames.push(frame);
 				break;
 			case JPG.DHT:
-				var huffmanLength = readUInt16();
+				let huffmanLength = readUInt16();
 				for (i = 2; i < huffmanLength;) {
-					var huffmanTableSpec = data[offset++];
-					var codeLengths = new Uint8Array(16);
-					var codeLengthSum = 0;
+					let huffmanTableSpec = data[offset++];
+					let codeLengths = new Uint8Array(16);
+					let codeLengthSum = 0;
 					for (j = 0; j < 16; j++, offset++) {
 						codeLengthSum += (codeLengths[j] = data[offset]);
 					}
-					var huffmanValues = new Uint8Array(codeLengthSum);
+					let huffmanValues = new Uint8Array(codeLengthSum);
 					for (j = 0; j < codeLengthSum; j++, offset++) {
 						huffmanValues[j] = data[offset];
 					}
 					i += 17 + codeLengthSum;
 					
-					(shiftR(huffmanTableSpec, 4) === 0 ? huffmanTablesDC : huffmanTablesAC)[huffmanTableSpec & 15] = buildHuffmanTable(codeLengths, huffmanValues);
+					(bitShiftR(huffmanTableSpec, 4) === 0 ? huffmanTablesDC : huffmanTablesAC)[bitAnd(huffmanTableSpec, 15)] = buildHuffmanTable(codeLengths, huffmanValues);
 				}
 				break;
 			case JPG.DRI:
@@ -896,22 +844,22 @@ class JpegImage {
 			case JPG.SOS: // FIXME performance bottleneck here
 				readUInt16();
 				
-				var selectorsCount = data[offset++];
-				var components = [];
-				var component;
+				let selectorsCount = data[offset++];
+				let components = [];
+				let component;
 				
 				for (i = 0; i < selectorsCount; i++) {
 					component = frame.components[data[offset++]];
-					var tableSpec = data[offset++];
-					component.huffmanTableDC = huffmanTablesDC[shiftR(tableSpec, 4)];
-					component.huffmanTableAC = huffmanTablesAC[tableSpec & 15];
+					let tableSpec = data[offset++];
+					component.huffmanTableDC = huffmanTablesDC[bitShiftR(tableSpec, 4)];
+					component.huffmanTableAC = huffmanTablesAC[bitAnd(tableSpec, 15)];
 					components.push(component);
 				}
 				
-				var spectralStart = data[offset++];
-				var spectralEnd = data[offset++];
-				var successiveApproximation = data[offset++];
-				var processed = decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, shiftR(successiveApproximation, 4), successiveApproximation & 15);
+				let spectralStart = data[offset++];
+				let spectralEnd = data[offset++];
+				let successiveApproximation = data[offset++];
+				let processed = decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, bitShiftR(successiveApproximation, 4), bitAnd(successiveApproximation, 15));
 				
 				offset += processed;
 				break;
@@ -934,47 +882,47 @@ class JpegImage {
 		
 		// set each frame's components quantization table
 		for (i = 0; i < frames.length; i++) {
-			var cp = frames[i].components;
+			let cp = frames[i].components;
 			
-			each(cp, v => {
-				v.quantizationTable = quantizationTables[v.quantizationIdx];
-				delete v.quantizationIdx;
+			each(cp, val => {
+				val.quantizationTable = quantizationTables[val.quantizationIdx];
+				delete val.quantizationIdx;
 			});
-//			for (j in cp) {
-//				cp[j].quantizationTable = quantizationTables[cp[j].quantizationIdx];
-//				delete cp[j].quantizationIdx;
-//			}
 		}
 		
 		this.width = frame.samplesPerLine;
 		this.height = frame.scanLines;
-		this.jfif = jfif;
-		this.adobe = adobe;
-		this.components = [];
-		
-		for (i = 0; i < frame.componentsOrder.length; i++) {
-			var component = frame.components[frame.componentsOrder[i]];
-			this.components.push({
-				lines: buildComponentData(frame, component),
-				scaleX: component.h / frame.maxH,
-				scaleY: component.v / frame.maxV
-			});
-		}
+		this.components = frame.componentsOrder.map(val => {
+			let com = frame.components[val];
+			
+			return {
+				lines: buildComponentData(frame, com),
+				scaleX: com.h / frame.maxH,
+				scaleY: com.v / frame.maxV
+			};
+		});
 	}
 	
-	_getData(width, height) {
-		let components = this.components;
-		let scaleX = this.width / width;
-		let scaleY = this.height / height;
-		let data = new Uint8Array(width * height * components.length);
+	/**
+	 * 
+	 * @param {Number} w
+	 * @param {Number} h
+	 * @return {Uint8Array}
+	 * @private
+	 */
+	_getData(w, h) {
+		let {ADOBE, components} = this;
+		let scaleX = this.width / w;
+		let scaleY = this.height / h;
 		let [component1, component2, component3, component4] = components;
+		let data = new Uint8Array(w * h * components.length);
+		let offset = 0;
 		let component1Line;
 		let component2Line;
 		let component3Line;
 		let component4Line;
 		let x;
 		let y;
-		let offset = 0;
 		let Y;
 		let Cb;
 		let Cr;
@@ -989,49 +937,49 @@ class JpegImage {
 		
 		switch (components.length) {
 		case 1:
-			for (y = 0; y < height; y++) {
-				component1Line = component1.lines[0 | (y * component1.scaleY * scaleY)];
-				for (x = 0; x < width; x++) {
-					Y = component1Line[0 | (x * component1.scaleX * scaleX)];
+			for (y = 0; y < h; y++) {
+				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
+				for (x = 0; x < w; x++) {
+					Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
 					
 					data[offset++] = Y;
 				}
 			}
 			break;
 		case 2: // PDF might compress two component data in custom color space
-			for (y = 0; y < height; y++) {
-				component1Line = component1.lines[0 | (y * component1.scaleY * scaleY)];
-				component2Line = component2.lines[0 | (y * component2.scaleY * scaleY)];
-				for (x = 0; x < width; x++) {
-					Y = component1Line[0 | (x * component1.scaleX * scaleX)];
+			for (y = 0; y < h; y++) {
+				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
+				component2Line = component2.lines[bitOr(0, y * component2.scaleY * scaleY)];
+				for (x = 0; x < w; x++) {
+					Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
 					data[offset++] = Y;
-					Y = component2Line[0 | (x * component2.scaleX * scaleX)];
+					Y = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
 					data[offset++] = Y;
 				}
 			}
 			break;
 		case 3: // the default transform for three components is true
 			colorTransform = true;
-			// The adobe transform marker overrides any previous setting
-			if (this.adobe && this.adobe.transformCode) {
+			// the adobe transform marker overrides any previous setting
+			if (ADOBE && ADOBE.transformCode) {
 				colorTransform = true;
 			} else if (typeof this.colorTransform !== "undefined") {
 				colorTransform = !!this.colorTransform;
 			}
 			
-			for (y = 0; y < height; y++) {
-				component1Line = component1.lines[0 | (y * component1.scaleY * scaleY)];
-				component2Line = component2.lines[0 | (y * component2.scaleY * scaleY)];
-				component3Line = component3.lines[0 | (y * component3.scaleY * scaleY)];
-				for (x = 0; x < width; x++) {
+			for (y = 0; y < h; y++) {
+				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
+				component2Line = component2.lines[bitOr(0, y * component2.scaleY * scaleY)];
+				component3Line = component3.lines[bitOr(0, y * component3.scaleY * scaleY)];
+				for (x = 0; x < w; x++) {
 					if (!colorTransform) {
-						R = component1Line[0 | (x * component1.scaleX * scaleX)];
-						G = component2Line[0 | (x * component2.scaleX * scaleX)];
-						B = component3Line[0 | (x * component3.scaleX * scaleX)];
+						R = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
+						G = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
+						B = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
 					} else {
-						Y = component1Line[0 | (x * component1.scaleX * scaleX)];
-						Cb = component2Line[0 | (x * component2.scaleX * scaleX)];
-						Cr = component3Line[0 | (x * component3.scaleX * scaleX)];
+						Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
+						Cb = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
+						Cr = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
 						
 						R = clampTo8bit(Y + 1.402 * (Cr - 128));
 						G = clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
@@ -1045,34 +993,34 @@ class JpegImage {
 			}
 			break;
 		case 4:
-			if (!this.adobe) {
+			if (!ADOBE) {
 				throw new Error("unsupported color mode (4 components)");
 			}
 			// the default transform for four components is false
 			colorTransform = false;
 			// the adobe transform marker overrides any previous setting
-			if (this.adobe && this.adobe.transformCode) {
+			if (ADOBE && ADOBE.transformCode) {
 				colorTransform = true;
 			} else if (typeof this.colorTransform !== "undefined") {
 				colorTransform = !!this.colorTransform;
 			}
 			
-			for (y = 0; y < height; y++) {
-				component1Line = component1.lines[0 | (y * component1.scaleY * scaleY)];
-				component2Line = component2.lines[0 | (y * component2.scaleY * scaleY)];
-				component3Line = component3.lines[0 | (y * component3.scaleY * scaleY)];
-				component4Line = component4.lines[0 | (y * component4.scaleY * scaleY)];
-				for (x = 0; x < width; x++) {
+			for (y = 0; y < h; y++) {
+				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
+				component2Line = component2.lines[bitOr(0, y * component2.scaleY * scaleY)];
+				component3Line = component3.lines[bitOr(0, y * component3.scaleY * scaleY)];
+				component4Line = component4.lines[bitOr(0, y * component4.scaleY * scaleY)];
+				for (x = 0; x < w; x++) {
 					if (!colorTransform) {
-						C = component1Line[0 | (x * component1.scaleX * scaleX)];
-						M = component2Line[0 | (x * component2.scaleX * scaleX)];
-						Ye = component3Line[0 | (x * component3.scaleX * scaleX)];
-						K = component4Line[0 | (x * component4.scaleX * scaleX)];
+						C = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
+						M = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
+						Ye = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
+						K = component4Line[bitOr(0, x * component4.scaleX * scaleX)];
 					} else {
-						Y = component1Line[0 | (x * component1.scaleX * scaleX)];
-						Cb = component2Line[0 | (x * component2.scaleX * scaleX)];
-						Cr = component3Line[0 | (x * component3.scaleX * scaleX)];
-						K = component4Line[0 | (x * component4.scaleX * scaleX)];
+						Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
+						Cb = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
+						Cr = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
+						K = component4Line[bitOr(0, x * component4.scaleX * scaleX)];
 						
 						C = 255 - clampTo8bit(Y + 1.402 * (Cr - 128));
 						M = 255 - clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
