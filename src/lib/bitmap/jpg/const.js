@@ -28,5 +28,5 @@ export default {
 	APP13: 0xFFED,
 	APP14: 0xFFEE,
 	APP15: 0xFFEF,
-	COM: 0xFFFE, // Comment
+	CMT: 0xFFFE, // Comment
 };

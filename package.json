@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "./node_modules/.bin/babel -w src/ -d build",
-    "test": "NODE_ENV=test npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 10000",
+    "test": " npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 10000",
     "build": "./node_modules/.bin/babel src/ -d build"
   },
   "keywords": [

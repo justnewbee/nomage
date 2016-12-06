@@ -6,6 +6,7 @@ import fs from "fs";
  * @param {Integer} [startPos]
  * @param {Integer} [len]
  * @return {Buffer}
+ * @throws {Error} when filePath refers to a file that cannot be read or does NOT exist
  */
 export default (filePath, startPos = 0, len = 262) => {
 	let buffer = new Buffer(len);
