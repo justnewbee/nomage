@@ -1,4 +1,6 @@
 import bitmapParse from "./bitmap/parse";
+import bitmapUnparse from "./bitmap/unparse";
+import fileSave from "./file/save";
 
 //function createBitmapFromScratch(w, h, fill) {
 //	let bitmap = {
@@ -62,11 +64,9 @@ class Image {
 //	 * @param {String} savePath a path to the destination file (either PNG or JPG)
 //	 * @returns {Promise}
 //	 */
-//	save(savePath) {
-////		return bitmapUnparse(bitmapParse(this.data)).then(buffer => {
-////			fileSave(buffer, savePath);
-////		});
-//	}
+	save(savePath) {
+		return bitmapUnparse(this._bitmap).then(buffer => fileSave(buffer, savePath));
+	}
 }
 
 export default file => {
