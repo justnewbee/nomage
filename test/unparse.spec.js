@@ -9,16 +9,18 @@ import {IMAGES} from "./_helper";
 
 describe("bitmap unparse - promise", function() {
 	describe("unparse from bitmap to file buffer which can be saved", function() {
-		function test(what, done) {
-			bitmapUnparse(bitmapParse(what.BUFFER)).then(buffer => {
+		function test(what) {
+			return bitmapParse(what.BUFFER || what.PATH).then(bitmap => bitmapUnparse(bitmap)).then(buffer => {
 				Buffer.isBuffer(buffer).should.equal(true);
 				fileSave(buffer, what.PATH_SAVE);
-				done();
-			}, done);
+			}).should.be.fulfilled();
 		}
 		
-		it("bmp", done => test(IMAGES.BMP, done));
-		it("jpg", done => test(IMAGES.JPG, done));
-		it("png", done => test(IMAGES.PNG, done));
+		it("bmp", () => test(IMAGES.BMP));
+		it("jpg", () => test(IMAGES.JPG));
+		it("png", () => test(IMAGES.PNG));
+		it("bmp - remote", () => test(IMAGES.BMP_REMOTE));
+		it("jpg - remote", () => test(IMAGES.JPG_REMOTE));
+		it("png - remote", () => test(IMAGES.PNG_REMOTE));
 	});
 });

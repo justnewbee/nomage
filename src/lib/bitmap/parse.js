@@ -1,7 +1,13 @@
 import fs from "fs";
 
+import request from "request";
+
+const requestFile = request.defaults({
+	encoding: null
+});
+
 import {MIME} from "../const";
-import mime from "../file/mime";
+import fileMime from "../file/mime";
 
 import bmpParse from "./bmp/parse";
 import jpgParse from "./jpg/parse";
@@ -9,15 +15,41 @@ import pngParse from "./png/parse";
 
 /**
  * convert file into a bitmap object
- * @param {String|Buffer} file
- * @return {Object} data
+ * @param {String|Buffer} file when string it can be file local path or a url
+ * @return {Promise.<Object>} bitmap object { width, height, mime, data, data_ }
  */
-export default file => {
-	let buffer = typeof file === "string" ? fs.readFileSync(file) : file;
-	let mimeType = mime(buffer);
+export default file => new Promise((resolve, reject) => {
+	if (Buffer.isBuffer(file)) {
+		resolve(file);
+	} else if (typeof file === "string") {
+		if (/^(?:\w+:)?\/\//.test(file)) { // URL
+			requestFile(file, function(err, response, data) {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
+		} else { // local file
+			fs.readFile(file, (err, data) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
+		}
+	} else {
+		reject({
+			message: "cannot resolve to a buffer",
+			detail: file
+		});
+	}
+}).then(buffer => {
+	let mime = fileMime(buffer);
 	let bitMap;
 	
-	switch (mimeType) {
+	switch (mime) {
 	case MIME.BMP:
 		bitMap = bmpParse(buffer);
 		break;
@@ -28,11 +60,11 @@ export default file => {
 		bitMap = pngParse(buffer);
 		break;
 	default:
-		throw new Error(`[bitmap/parse] unsupported mime "${mimeType}"`);
+		throw new Error(`[bitmap/parse] unsupported mime "${mime}"`);
 	}
 	
-	bitMap.mime = mimeType;
+	bitMap.mime = mime;
 	bitMap.data_ = buffer; // file buffer and image buffer are quite different, put one here for ref
 	
 	return bitMap;
-};
+});
