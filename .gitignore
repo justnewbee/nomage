@@ -4,4 +4,4 @@ node_modules/
 build/
 coverage/
 # generated during test
-saved_by_test*
+*saved_by_test*

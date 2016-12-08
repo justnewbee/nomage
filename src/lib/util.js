@@ -29,6 +29,15 @@ export default {
 		return num >> n;
 	},
 	/**
+	 * bitwise right shift unsigned
+	 * @param {Integer} num
+	 * @param {Integer} n
+	 * @return {Integer}
+	 */
+	bitShiftRU(num, n) {
+		return num >>> n;
+	},
+	/**
 	 * bit and
 	 * @param {Integer} n1
 	 * @param {Integer} n2
