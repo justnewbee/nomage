@@ -28,16 +28,17 @@ function generateUint8Buffer(bufferLength) {
 
 class Resize {
 	constructor(buffer, widthOriginal, heightOriginal, targetWidth, targetHeight, blendAlpha, interpolationPass) {
+		let colorChannels = blendAlpha ? 4 : 3;
+		
 		this.widthOriginal = Math.abs(parseInt(widthOriginal) || 0);
 		this.heightOriginal = Math.abs(parseInt(heightOriginal) || 0);
 		this.targetWidth = Math.abs(parseInt(targetWidth) || 0);
 		this.targetHeight = Math.abs(parseInt(targetHeight) || 0);
-		this.colorChannels = !!blendAlpha ? 4 : 3;
 		this.interpolationPass = !!interpolationPass;
 		
-		this.targetWidthMultipliedByChannels = this.targetWidth * this.colorChannels;
-		this.originalWidthMultipliedByChannels = this.widthOriginal * this.colorChannels;
-		this.originalHeightMultipliedByChannels = this.heightOriginal * this.colorChannels;
+		this.targetWidthMultipliedByChannels = this.targetWidth * colorChannels;
+		this.originalWidthMultipliedByChannels = this.widthOriginal * colorChannels;
+		this.originalHeightMultipliedByChannels = this.heightOriginal * colorChannels;
 		this.widthPassResultSize = this.targetWidthMultipliedByChannels * this.heightOriginal;
 		this.finalResultSize = this.targetWidthMultipliedByChannels * this.targetHeight;
 		
@@ -46,13 +47,13 @@ class Resize {
 			this.widthBuffer = generateFloatBuffer(this.widthPassResultSize);
 			
 			if (this.ratioWeightWidthPass < 1 && this.interpolationPass) {
-				this.resizeWidth = this.colorChannels == 4 ? this.resizeWidthInterpolatedRGBA : this.resizeWidthInterpolatedRGB;
+				this.resizeWidth = blendAlpha ? this.resizeWidthInterpolatedRGBA : this.resizeWidthInterpolatedRGB;
 			} else {
 				this.outputWidthWorkBench = generateFloatBuffer(this.originalHeightMultipliedByChannels);
-				if (this.colorChannels > 3) {
+				if (blendAlpha) {
 					this.outputWidthWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.heightOriginal);
 				}
-				this.resizeWidth = this.colorChannels == 4 ? this.resizeWidthRGBA : this.resizeWidthRGB;
+				this.resizeWidth = blendAlpha ? this.resizeWidthRGBA : this.resizeWidthRGB;
 			}
 			
 			buffer = this.resizeWidth(buffer);
@@ -66,10 +67,10 @@ class Resize {
 				this.resizeHeight = this.resizeHeightInterpolated;
 			} else {
 				this.outputHeightWorkBench = generateFloatBuffer(this.targetWidthMultipliedByChannels);
-				if (this.colorChannels > 3) {
+				if (blendAlpha) {
 					this.outputHeightWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.targetWidth);
 				}
-				this.resizeHeight = this.colorChannels == 4 ? this.resizeHeightRGBA : this.resizeHeightRGB;
+				this.resizeHeight = blendAlpha ? this.resizeHeightRGBA : this.resizeHeightRGB;
 			}
 			
 			buffer = this.resizeHeight(buffer);
@@ -131,6 +132,7 @@ class Resize {
 				outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3];
 			}
 		}
+		
 		return outputBuffer;
 	}
 	
