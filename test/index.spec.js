@@ -315,16 +315,9 @@ describe("nomage", function() {
 			it("png crop", testOpAndSaveGen(true, "crop")(IMAGES.PNG, testOnSaved));
 		});
 		describe("resize", () => {
-			function testOnSaved(savedImg, args) {
-				let [x1, y1, x2, y2] = args;
-				
-				savedImg.width.should.equal(x2 - x1 + 1);
-				savedImg.height.should.equal(y2 - y1 + 1);
-			}
-			
-			it("bmp resize", testOpAndSaveGen("resize", "50%")(IMAGES.BMP, testOnSaved));
-			it("jpg resize", testOpAndSaveGen("resize", "50%")(IMAGES.JPG, testOnSaved));
-			it("png resize", testOpAndSaveGen("resize", "50%")(IMAGES.PNG, testOnSaved));
+			it("bmp resize", testOpAndSaveGen("resize", "125%")(IMAGES.BMP));
+			it("jpg resize", testOpAndSaveGen("resize", "50%")(IMAGES.JPG));
+			it("png resize", testOpAndSaveGen("resize", "25%")(IMAGES.PNG));
 		});
 	});
 });
