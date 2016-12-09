@@ -45,11 +45,7 @@ class Resize {
 		this.widthPassResultSize = this.targetWidthMultipliedByChannels * this.heightOriginal;
 		this.finalResultSize = this.targetWidthMultipliedByChannels * this.targetHeight;
 		
-		if (this.widthOriginal == this.targetWidth) {
-			// Bypass the width resizer pass:
-			this.resizeWidth = bypassResizer;
-		} else {
-			// Setup the width resizer pass:
+		if (this.widthOriginal !== this.targetWidth) {
 			this.ratioWeightWidthPass = this.widthOriginal / this.targetWidth;
 			if (this.ratioWeightWidthPass < 1 && this.interpolationPass) {
 				this.initializeFirstPassBuffers(true);
@@ -58,12 +54,11 @@ class Resize {
 				this.initializeFirstPassBuffers(false);
 				this.resizeWidth = this.colorChannels == 4 ? this.resizeWidthRGBA : this.resizeWidthRGB;
 			}
+			
+			buffer = this.resizeWidth(buffer);
 		}
-		if (this.heightOriginal == this.targetHeight) {
-			// bypass the height resizer pass:
-			this.resizeHeight = bypassResizer;
-		} else {
-			// setup the height resizer pass:
+		
+		if (this.heightOriginal !== this.targetHeight) {
 			this.ratioWeightHeightPass = this.heightOriginal / this.targetHeight;
 			if (this.ratioWeightHeightPass < 1 && this.interpolationPass) {
 				this.initializeSecondPassBuffers(true);
@@ -72,19 +67,9 @@ class Resize {
 				this.initializeSecondPassBuffers(false);
 				this.resizeHeight = this.colorChannels == 4 ? this.resizeHeightRGBA : this.resizeHeightRGB;
 			}
+			
+			buffer = this.resizeHeight(buffer);
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		buffer = this.resizeWidth(buffer);
-		buffer = this.resizeHeight(buffer);
 		
 		this.FUCK = new Buffer(buffer);
 	}
@@ -351,7 +336,7 @@ class Resize {
 		}
 		return outputBuffer;
 	}
-
+	
 	resizeHeightRGB(buffer) {
 		return this._resizeHeightRGBChannels(buffer, false);
 	}
@@ -373,7 +358,6 @@ class Resize {
 	}
 	
 	initializeSecondPassBuffers(BILINEARAlgo) {
-		// initialize the internal height pass buffers:
 		this.heightBuffer = generateUint8Buffer(this.finalResultSize);
 		
 		if (!BILINEARAlgo) {
@@ -384,6 +368,12 @@ class Resize {
 		}
 	}
 }
+
+
+
+
+
+
 
 /**
  * 
