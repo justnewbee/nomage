@@ -22,7 +22,7 @@ function generateLocal(relPath, mime) {
 		W: Number(W),
 		H: Number(H),
 		PATH,
-		PATH_SAVE: path.join(__dirname, "images", relPath.replace(/\.(\w+)$/, `_${SAVED_BY_TEST}\.$1`)),
+		PATH_SAVE: path.join(__dirname, "images", SAVED_BY_TEST, relPath),
 		BUFFER: fs.readFileSync(PATH)
 	};
 }
@@ -40,7 +40,7 @@ function generateRemote(url, mime, w, h) {
 		W: w,
 		H: h,
 		PATH: url,
-		PATH_SAVE: path.join(__dirname, "images", `${SAVED_BY_TEST}_REMOTE.${mime.replace("image/", "")}`)
+		PATH_SAVE: path.join(__dirname, "images", SAVED_BY_TEST, `remote.${mime.replace("image/", "")}`)
 	};
 }
 

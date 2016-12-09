@@ -1,3 +1,5 @@
+import tinyColor from "tinycolor2";
+
 export default {
 	/**
 	 * 
@@ -54,5 +56,21 @@ export default {
 	 */
 	bitOr(n1, n2) {
 		return n1 | n2;
+	},
+	/**
+	 * tinyColor has quite a performance issue when doing a big loop
+	 * @param {Array|String|Color} color
+	 * @return {Number[]} the RGB values
+	 */
+	getRGB(color = [0, 0, 0]) {
+		if (Array.isArray(color)) {
+			let [r = 0, g = 0, b = 0] = color;
+			
+			return [r, g, b];
+		}
+		
+		let {r, g, b} = tinyColor(color).toRgb();
+		return [r, g, b];
 	}
+	
 };
