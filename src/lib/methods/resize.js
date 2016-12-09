@@ -1,10 +1,6 @@
 // JavaScript Image Resizer (c) 2012 - Grant Galitz
 // Released to public domain 29 July 2013: https://github.com/grantgalitz/JS-Image-Resizer/issues/4
 
-function bypassResizer(buffer) {
-	// just return the buffer passsed:
-	return buffer;
-}
 function generateFloatBuffer(bufferLength) {
 	// generate a float32 typed array buffer:
 	try {
@@ -47,11 +43,15 @@ class Resize {
 		
 		if (this.widthOriginal !== this.targetWidth) {
 			this.ratioWeightWidthPass = this.widthOriginal / this.targetWidth;
+			this.widthBuffer = generateFloatBuffer(this.widthPassResultSize);
+			
 			if (this.ratioWeightWidthPass < 1 && this.interpolationPass) {
-				this.initializeFirstPassBuffers(true);
 				this.resizeWidth = this.colorChannels == 4 ? this.resizeWidthInterpolatedRGBA : this.resizeWidthInterpolatedRGB;
 			} else {
-				this.initializeFirstPassBuffers(false);
+				this.outputWidthWorkBench = generateFloatBuffer(this.originalHeightMultipliedByChannels);
+				if (this.colorChannels > 3) {
+					this.outputWidthWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.heightOriginal);
+				}
 				this.resizeWidth = this.colorChannels == 4 ? this.resizeWidthRGBA : this.resizeWidthRGB;
 			}
 			
@@ -60,11 +60,15 @@ class Resize {
 		
 		if (this.heightOriginal !== this.targetHeight) {
 			this.ratioWeightHeightPass = this.heightOriginal / this.targetHeight;
+			this.heightBuffer = generateUint8Buffer(this.finalResultSize);
+			
 			if (this.ratioWeightHeightPass < 1 && this.interpolationPass) {
-				this.initializeSecondPassBuffers(true);
 				this.resizeHeight = this.resizeHeightInterpolated;
 			} else {
-				this.initializeSecondPassBuffers(false);
+				this.outputHeightWorkBench = generateFloatBuffer(this.targetWidthMultipliedByChannels);
+				if (this.colorChannels > 3) {
+					this.outputHeightWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.targetWidth);
+				}
 				this.resizeHeight = this.colorChannels == 4 ? this.resizeHeightRGBA : this.resizeHeightRGB;
 			}
 			
@@ -344,36 +348,7 @@ class Resize {
 	resizeHeightRGBA(buffer) {
 		return this._resizeHeightRGBChannels(buffer, true);
 	}
-	
-	initializeFirstPassBuffers(BILINEARAlgo) {
-		// initialize the internal width pass buffers:
-		this.widthBuffer = generateFloatBuffer(this.widthPassResultSize);
-		
-		if (!BILINEARAlgo) {
-			this.outputWidthWorkBench = generateFloatBuffer(this.originalHeightMultipliedByChannels);
-			if (this.colorChannels > 3) {
-				this.outputWidthWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.heightOriginal);
-			}
-		}
-	}
-	
-	initializeSecondPassBuffers(BILINEARAlgo) {
-		this.heightBuffer = generateUint8Buffer(this.finalResultSize);
-		
-		if (!BILINEARAlgo) {
-			this.outputHeightWorkBench = generateFloatBuffer(this.targetWidthMultipliedByChannels);
-			if (this.colorChannels > 3) {
-				this.outputHeightWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.targetWidth);
-			}
-		}
-	}
 }
-
-
-
-
-
-
 
 /**
  * 
