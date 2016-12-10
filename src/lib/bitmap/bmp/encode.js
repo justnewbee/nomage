@@ -1,88 +1,48 @@
+import BMP from "./bmp";
+
 /**
- * @author shaozilee
- *
  * BMP format encoder, encode 24bit BMP
  * Not support quality compression
  */
-class BmpEncoder {
-	constructor(bitmap) {
-		this.buffer = bitmap.data;
-		this.width = bitmap.width;
-		this.height = bitmap.height;
-		this.extraBytes = this.width % 4;
-		this.rgbSize = this.height * (3 * this.width + this.extraBytes);
-		this.headerInfoSize = 40;
-		
-		this.data = [];
-		// header
-		this.flag = "BM";
-		this.reserved = 0;
-		this.offset = 54;
-		this.fileSize = this.rgbSize + this.offset;
-		this.planes = 1;
-		this.bitPP = 24;
-		this.compress = 0;
-		this.hr = 0;
-		this.vr = 0;
-		this.colors = 0;
-		this.importantColors = 0;
+export default bitmap => {
+	const {data, width, height} = bitmap;
+	const extraBytes = width % 4;
+	const rgbSize = height * (3 * width + extraBytes);
+	const rowBytes = 3 * width + extraBytes;
+	
+	let buffer = new Buffer(BMP.DATA_OFFSET + rgbSize);
+	// header
+	buffer.write(BMP.FLAG, 0, 2);
+	buffer.writeUInt32LE(BMP.DATA_OFFSET + rgbSize, 2);
+	buffer.writeUInt32LE(0, 6);
+	buffer.writeUInt32LE(BMP.DATA_OFFSET, 10);
+	buffer.writeUInt32LE(BMP.INFO_SIZE, 14);
+	buffer.writeUInt32LE(width, 18);
+	buffer.writeUInt32LE(height, 22);
+	buffer.writeUInt16LE(1, 26);
+	buffer.writeUInt16LE(24, 28);
+	buffer.writeUInt32LE(0, 30);
+	buffer.writeUInt32LE(rgbSize, 34);
+	buffer.writeUInt32LE(0, 38);
+	buffer.writeUInt32LE(0, 42);
+	buffer.writeUInt32LE(0, 46);
+	buffer.writeUInt32LE(0, 50);
+	
+	let i = 0;
+	// data
+	for (let y = height - 1; y >= 0; y--) {
+		for (let x = 0; x < width; x++) {
+			let p = 54 + y * rowBytes + x * 3;
+			buffer[p + 2] = data[i++]; // r
+			buffer[p + 1] = data[i++]; // g
+			buffer[p] = data[i++]; // b
+			i++;
+		}
+		if (extraBytes > 0) {
+			let fillOffset = 54 + y * rowBytes + width * 3;
+			buffer.fill(0, fillOffset, fillOffset + extraBytes);
+		}
 	}
 	
-	encode() {
-		var tempBuffer = new Buffer(this.offset + this.rgbSize);
-		this.pos = 0;
-		tempBuffer.write(this.flag, this.pos, 2);
-		this.pos += 2;
-		tempBuffer.writeUInt32LE(this.fileSize, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.reserved, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.offset, this.pos);
-		this.pos += 4;
-		
-		tempBuffer.writeUInt32LE(this.headerInfoSize, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.width, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.height, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt16LE(this.planes, this.pos);
-		this.pos += 2;
-		tempBuffer.writeUInt16LE(this.bitPP, this.pos);
-		this.pos += 2;
-		tempBuffer.writeUInt32LE(this.compress, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.rgbSize, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.hr, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.vr, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.colors, this.pos);
-		this.pos += 4;
-		tempBuffer.writeUInt32LE(this.importantColors, this.pos);
-		this.pos += 4;
-		
-		var i = 0;
-		var rowBytes = 3 * this.width + this.extraBytes;
-		
-		for (var y = this.height - 1; y >= 0; y--) {
-			for (var x = 0; x < this.width; x++) {
-				var p = this.pos + y * rowBytes + x * 3;
-				tempBuffer[p + 2] = this.buffer[i++]; // r
-				tempBuffer[p + 1] = this.buffer[i++]; // g
-				tempBuffer[p] = this.buffer[i++]; // b
-				i++;
-			}
-			if (this.extraBytes > 0) {
-				var fillOffset = this.pos + y * rowBytes + this.width * 3;
-				tempBuffer.fill(0, fillOffset, fillOffset + this.extraBytes);
-			}
-		}
-		
-		return tempBuffer;
-	}
-}
-
-
-export default bitmap => new BmpEncoder(bitmap).encode();
+	return buffer;
+};
