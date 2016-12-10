@@ -2,7 +2,6 @@
 // Released to public domain 29 July 2013: https://github.com/grantgalitz/JS-Image-Resizer/issues/4
 
 function generateFloatBuffer(bufferLength) {
-	// generate a float32 typed array buffer:
 	try {
 		return new Float32Array(bufferLength);
 	} catch (error) {
@@ -10,7 +9,6 @@ function generateFloatBuffer(bufferLength) {
 	}
 }
 function generateFloat64Buffer(bufferLength) {
-	// generate a float64 typed array buffer:
 	try {
 		return new Float64Array(bufferLength);
 	} catch (error) {
@@ -18,7 +16,6 @@ function generateFloat64Buffer(bufferLength) {
 	}
 }
 function generateUint8Buffer(bufferLength) {
-	// Generate a uint8 typed array buffer:
 	try {
 		return new Uint8Array(bufferLength);
 	} catch (error) {
@@ -26,323 +23,307 @@ function generateUint8Buffer(bufferLength) {
 	}
 }
 
-class Resize {
-	constructor(buffer, widthOriginal, heightOriginal, targetWidth, targetHeight, interpolationPass) {
-		this.widthOriginal = Math.abs(parseInt(widthOriginal) || 0);
-		this.heightOriginal = Math.abs(parseInt(heightOriginal) || 0);
-		this.targetWidth = Math.abs(parseInt(targetWidth) || 0);
-		this.targetHeight = Math.abs(parseInt(targetHeight) || 0);
-		
-		this.targetWidthMultipliedByChannels = this.targetWidth * 4;
-		this.originalWidthMultipliedByChannels = this.widthOriginal * 4;
-		this.originalHeightMultipliedByChannels = this.heightOriginal * 4;
-		
-		this.widthPassResultSize = this.targetWidthMultipliedByChannels * this.heightOriginal;
-		this.finalResultSize = this.targetWidthMultipliedByChannels * this.targetHeight;
-		
-		if (this.widthOriginal !== this.targetWidth) {
-			this.ratioWeightWidthPass = this.widthOriginal / this.targetWidth;
-			this.widthBuffer = generateFloatBuffer(this.widthPassResultSize);
-			
-			if (this.ratioWeightWidthPass < 1 && interpolationPass) {
-				this.resizeWidth = this._resizeWidthInterpolatedRGBChannels;
-			} else {
-				this.outputWidthWorkBench = generateFloatBuffer(this.originalHeightMultipliedByChannels);
-				this.outputWidthWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.heightOriginal);
-				this.resizeWidth = this._resizeWidthRGBChannels;
-			}
-			
-			buffer = this.resizeWidth(buffer);
+function resizeWidthInterpolated(buffer, sizing) {
+	const {width, height, widthRatio, widthBy4, toWidthBy4} = sizing;
+	const widthPassResultSize = toWidthBy4 * height;
+	const outputBuffer = generateFloatBuffer(widthPassResultSize);
+	
+	let weight = 0;
+	let finalOffset = 0;
+	let pixelOffset = 0;
+	let firstWeight = 0;
+	let secondWeight = 0;
+	let targetPosition;
+	let interpolationWidthSourceReadStop;
+	
+	// handle for only one interpolation input being valid for start calculation
+	for (targetPosition = 0; weight < 1 / 3; targetPosition += 4, weight += widthRatio) {
+		for (finalOffset = targetPosition, pixelOffset = 0; finalOffset < widthPassResultSize; pixelOffset += widthBy4, finalOffset += toWidthBy4) {
+			outputBuffer[finalOffset] = buffer[pixelOffset];
+			outputBuffer[finalOffset + 1] = buffer[pixelOffset + 1];
+			outputBuffer[finalOffset + 2] = buffer[pixelOffset + 2];
+			outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3];
 		}
-		
-		if (this.heightOriginal !== this.targetHeight) {
-			this.ratioWeightHeightPass = this.heightOriginal / this.targetHeight;
-			this.heightBuffer = generateUint8Buffer(this.finalResultSize);
-			
-			if (this.ratioWeightHeightPass < 1 && interpolationPass) {
-				this.resizeHeight = this.resizeHeightInterpolated;
-			} else {
-				this.outputHeightWorkBench = generateFloatBuffer(this.targetWidthMultipliedByChannels);
-				this.outputHeightWorkBenchOpaquePixelsCount = generateFloat64Buffer(this.targetWidth);
-				this.resizeHeight = this.resizeHeightRGBA;
-			}
-			
-			buffer = this.resizeHeight(buffer);
+	}
+	// adjust for overshoot of the last pass's counter
+	weight -= 1 / 3;
+	
+	for (interpolationWidthSourceReadStop = width - 1; weight < interpolationWidthSourceReadStop; targetPosition += 4, weight += widthRatio) {
+		// calculate weightings
+		secondWeight = weight % 1;
+		firstWeight = 1 - secondWeight;
+		// interpolate
+		for (finalOffset = targetPosition, pixelOffset = Math.floor(weight) * 4; finalOffset < widthPassResultSize; pixelOffset += widthBy4, finalOffset += toWidthBy4) {
+			outputBuffer[finalOffset] = buffer[pixelOffset] * firstWeight + buffer[pixelOffset + 4] * secondWeight;
+			outputBuffer[finalOffset + 1] = buffer[pixelOffset + 1] * firstWeight + buffer[pixelOffset + 5] * secondWeight;
+			outputBuffer[finalOffset + 2] = buffer[pixelOffset + 2] * firstWeight + buffer[pixelOffset + 6] * secondWeight;
+			outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3] * firstWeight + buffer[pixelOffset + 7] * secondWeight;
 		}
-		
-		this.FUCK = new Buffer(buffer);
+	}
+	// handle for only one interpolation input being valid for end calculation:
+	for (interpolationWidthSourceReadStop = widthBy4 - 4; targetPosition < toWidthBy4; targetPosition += 4) {
+		for (finalOffset = targetPosition, pixelOffset = interpolationWidthSourceReadStop; finalOffset < widthPassResultSize; pixelOffset += widthBy4, finalOffset += toWidthBy4) {
+			outputBuffer[finalOffset] = buffer[pixelOffset];
+			outputBuffer[finalOffset + 1] = buffer[pixelOffset + 1];
+			outputBuffer[finalOffset + 2] = buffer[pixelOffset + 2];
+			outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3];
+		}
 	}
 	
-	_resizeWidthInterpolatedRGBChannels(buffer) {
-		let channelsNum = 4;
-		let ratioWeight = this.ratioWeightWidthPass;
-		let weight = 0;
-		let finalOffset = 0;
-		let pixelOffset = 0;
-		let firstWeight = 0;
-		let secondWeight = 0;
-		let outputBuffer = this.widthBuffer;
-		let targetPosition;
-		let interpolationWidthSourceReadStop;
-		
-		// Handle for only one interpolation input being valid for start calculation:
-		for (targetPosition = 0; weight < 1 / 3; targetPosition += channelsNum, weight += ratioWeight) {
-			for (finalOffset = targetPosition, pixelOffset = 0; finalOffset < this.widthPassResultSize; pixelOffset += this.originalWidthMultipliedByChannels, finalOffset += this.targetWidthMultipliedByChannels) {
-				outputBuffer[finalOffset] = buffer[pixelOffset];
-				outputBuffer[finalOffset + 1] = buffer[pixelOffset + 1];
-				outputBuffer[finalOffset + 2] = buffer[pixelOffset + 2];
-				outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3];
-			}
-		}
-		// Adjust for overshoot of the last pass's counter:
-		weight -= 1 / 3;
-		for (interpolationWidthSourceReadStop = this.widthOriginal - 1; weight < interpolationWidthSourceReadStop; targetPosition += channelsNum, weight += ratioWeight) {
-			// Calculate weightings:
-			secondWeight = weight % 1;
-			firstWeight = 1 - secondWeight;
-			// Interpolate:
-			for (finalOffset = targetPosition, pixelOffset = Math.floor(weight) * channelsNum; finalOffset < this.widthPassResultSize; pixelOffset += this.originalWidthMultipliedByChannels, finalOffset += this.targetWidthMultipliedByChannels) {
-				outputBuffer[finalOffset] = buffer[pixelOffset] * firstWeight + buffer[pixelOffset + channelsNum] * secondWeight;
-				outputBuffer[finalOffset + 1] = buffer[pixelOffset + 1] * firstWeight + buffer[pixelOffset + channelsNum + 1] * secondWeight;
-				outputBuffer[finalOffset + 2] = buffer[pixelOffset + 2] * firstWeight + buffer[pixelOffset + channelsNum + 2] * secondWeight;
-				outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3] * firstWeight + buffer[pixelOffset + channelsNum + 3] * secondWeight;
-			}
-		}
-		// Handle for only one interpolation input being valid for end calculation:
-		for (interpolationWidthSourceReadStop = this.originalWidthMultipliedByChannels - channelsNum; targetPosition < this.targetWidthMultipliedByChannels; targetPosition += channelsNum) {
-			for (finalOffset = targetPosition, pixelOffset = interpolationWidthSourceReadStop; finalOffset < this.widthPassResultSize; pixelOffset += this.originalWidthMultipliedByChannels, finalOffset += this.targetWidthMultipliedByChannels) {
-				outputBuffer[finalOffset] = buffer[pixelOffset];
-				outputBuffer[finalOffset + 1] = buffer[pixelOffset + 1];
-				outputBuffer[finalOffset + 2] = buffer[pixelOffset + 2];
-				outputBuffer[finalOffset + 3] = buffer[pixelOffset + 3];
-			}
-		}
-		
-		return outputBuffer;
-	}
+	return outputBuffer;
+}
+
+function resizeWidthRGB(buffer, sizing) {
+	const {height, widthRatio, widthBy4, toWidthBy4} = sizing;
+	const output = generateFloatBuffer(height * 4);
+	const outputBuffer = generateFloatBuffer(toWidthBy4 * height);
+	const trustworthyColorsCount = generateFloat64Buffer(height);
+	const nextLineOffset = widthBy4 - 3;
+	const nextLineOffset2 = toWidthBy4 - 3;
 	
-	_resizeWidthRGBChannels(buffer) {
-		let channelsNum = 4;
-		let ratioWeight = this.ratioWeightWidthPass;
-		let ratioWeightDivisor = 1 / ratioWeight;
-		let weight = 0;
-		let amountToNext = 0;
-		let actualPosition = 0;
-		let currentPosition = 0;
-		let line = 0;
-		let pixelOffset = 0;
-		let outputOffset = 0;
-		let nextLineOffsetOriginalWidth = this.originalWidthMultipliedByChannels - channelsNum + 1;
-		let nextLineOffsetTargetWidth = this.targetWidthMultipliedByChannels - channelsNum + 1;
-		let output = this.outputWidthWorkBench;
-		let outputBuffer = this.widthBuffer;
-		let trustworthyColorsCount = this.outputWidthWorkBenchOpaquePixelsCount;
-		let multiplier = 1;
-		let r = 0;
-		let g = 0;
-		let b = 0;
-		let a = 0;
+	let weight = 0;
+	let amountToNext = 0;
+	let actualPosition = 0;
+	let currentPosition = 0;
+	let line = 0;
+	let pixelOffset = 0;
+	let outputOffset = 0;
+	let multiplier = 1;
+	let r = 0;
+	let g = 0;
+	let b = 0;
+	let a = 0;
+	
+	do {
+		for (line = 0; line < height * 4; ) {
+			output[line++] = 0;
+			output[line++] = 0;
+			output[line++] = 0;
+			output[line++] = 0;
+			trustworthyColorsCount[line / 4 - 1] = 0;
+		}
+		
+		weight = widthRatio;
 		
 		do {
-			for (line = 0; line < this.originalHeightMultipliedByChannels;) {
-				output[line++] = 0;
-				output[line++] = 0;
-				output[line++] = 0;
-				output[line++] = 0;
-				trustworthyColorsCount[line / channelsNum - 1] = 0;
+			amountToNext = 1 + actualPosition - currentPosition;
+			multiplier = Math.min(weight, amountToNext);
+			
+			for (line = 0, pixelOffset = actualPosition; line < height * 4; pixelOffset += nextLineOffset) {
+				r = buffer[pixelOffset];
+				g = buffer[++pixelOffset];
+				b = buffer[++pixelOffset];
+				a = buffer[++pixelOffset];
+				
+				// ignore RGB values if pixel is completely transparent
+				
+				output[line++] += (a ? r : 0) * multiplier;
+				output[line++] += (a ? g : 0) * multiplier;
+				output[line++] += (a ? b : 0) * multiplier;
+				output[line++] += a * multiplier;
+				
+				trustworthyColorsCount[line / 4 - 1] += a ? multiplier : 0;
 			}
-			weight = ratioWeight;
-			do {
-				amountToNext = 1 + actualPosition - currentPosition;
-				multiplier = Math.min(weight, amountToNext);
-				for (line = 0, pixelOffset = actualPosition; line < this.originalHeightMultipliedByChannels; pixelOffset += nextLineOffsetOriginalWidth) {
-					r = buffer[pixelOffset];
-					g = buffer[++pixelOffset];
-					b = buffer[++pixelOffset];
-					a = buffer[++pixelOffset];
-					// Ignore RGB values if pixel is completely transparent
-					output[line++] += (a ? r : 0) * multiplier;
-					output[line++] += (a ? g : 0) * multiplier;
-					output[line++] += (a ? b : 0) * multiplier;
-					output[line++] += a * multiplier;
-					trustworthyColorsCount[line / channelsNum - 1] += a ? multiplier : 0;
-				}
-				if (weight >= amountToNext) {
-					currentPosition = actualPosition = actualPosition + channelsNum;
-					weight -= amountToNext;
-				} else {
-					currentPosition += weight;
-					break;
-				}
-			} while (weight > 0 && actualPosition < this.originalWidthMultipliedByChannels);
-			for (line = 0, pixelOffset = outputOffset; line < this.originalHeightMultipliedByChannels; pixelOffset += nextLineOffsetTargetWidth) {
-				weight = trustworthyColorsCount[line / channelsNum];
-				multiplier = weight ? 1 / weight : 0;
-				outputBuffer[pixelOffset] = output[line++] * multiplier;
-				outputBuffer[++pixelOffset] = output[line++] * multiplier;
-				outputBuffer[++pixelOffset] = output[line++] * multiplier;
-				outputBuffer[++pixelOffset] = output[line++] * ratioWeightDivisor;
+			if (weight >= amountToNext) {
+				currentPosition = actualPosition = actualPosition + 4;
+				weight -= amountToNext;
+			} else {
+				currentPosition += weight;
+				break;
 			}
-			outputOffset += channelsNum;
-		} while (outputOffset < this.targetWidthMultipliedByChannels);
+		} while (weight > 0 && actualPosition < widthBy4);
 		
-		return outputBuffer;
-	}
-	_resizeHeightRGBChannels(buffer, fourthChannel) {
-		let ratioWeight = this.ratioWeightHeightPass;
-		let ratioWeightDivisor = 1 / ratioWeight;
-		let weight = 0;
-		let amountToNext = 0;
-		let actualPosition = 0;
-		let currentPosition = 0;
-		let pixelOffset = 0;
-		let outputOffset = 0;
-		let output = this.outputHeightWorkBench;
-		let outputBuffer = this.heightBuffer;
-		let trustworthyColorsCount = this.outputHeightWorkBenchOpaquePixelsCount;
-		let caret = 0;
-		let multiplier = 1;
-		let r = 0;
-		let g = 0;
-		let b = 0;
-		let a = 0;
+		for (line = 0, pixelOffset = outputOffset; line < height * 4; pixelOffset += nextLineOffset2) {
+			weight = trustworthyColorsCount[line / 4];
+			multiplier = weight ? 1 / weight : 0;
+			outputBuffer[pixelOffset] = output[line++] * multiplier;
+			outputBuffer[++pixelOffset] = output[line++] * multiplier;
+			outputBuffer[++pixelOffset] = output[line++] * multiplier;
+			outputBuffer[++pixelOffset] = output[line++] / widthRatio;
+		}
+		outputOffset += 4;
+	} while (outputOffset < toWidthBy4);
+	
+	return outputBuffer;
+}
+function resizeHeightRGB(buffer, sizing) {
+	const {height, toWidth, heightRatio, toWidthBy4, finalResultSize} = sizing;
+	const widthPassResultSize = toWidthBy4 * height;
+	const outputBuffer = generateUint8Buffer(finalResultSize);
+	const output = generateFloatBuffer(toWidthBy4);
+	const trustworthyColorsCount = generateFloat64Buffer(toWidth);
+	
+	let weight = 0;
+	let amountToNext = 0;
+	let actualPosition = 0;
+	let currentPosition = 0;
+	let pixelOffset = 0;
+	let outputOffset = 0;
+	let caret = 0;
+	let multiplier = 1;
+	let r = 0;
+	let g = 0;
+	let b = 0;
+	let a = 0;
+	
+	do {
+		for (pixelOffset = 0; pixelOffset < toWidthBy4;) {
+			output[pixelOffset++] = 0;
+			output[pixelOffset++] = 0;
+			output[pixelOffset++] = 0;
+			output[pixelOffset++] = 0;
+			trustworthyColorsCount[pixelOffset / 4 - 1] = 0;
+		}
+		
+		weight = heightRatio;
 		
 		do {
-			for (pixelOffset = 0; pixelOffset < this.targetWidthMultipliedByChannels;) {
-				output[pixelOffset++] = 0;
-				output[pixelOffset++] = 0;
-				output[pixelOffset++] = 0;
-				if (!fourthChannel) {
-					continue;
-				}
-				output[pixelOffset++] = 0;
-				trustworthyColorsCount[pixelOffset / 4 - 1] = 0;
+			amountToNext = 1 + actualPosition - currentPosition;
+			multiplier = Math.min(weight, amountToNext);
+			caret = actualPosition;
+			for (pixelOffset = 0; pixelOffset < toWidthBy4; ) {
+				r = buffer[caret++];
+				g = buffer[caret++];
+				b = buffer[caret++];
+				a = buffer[caret++];
+				// ignore RGB values if pixel is completely transparent
+				output[pixelOffset++] += (a ? r : 0) * multiplier;
+				output[pixelOffset++] += (a ? g : 0) * multiplier;
+				output[pixelOffset++] += (a ? b : 0) * multiplier;
+				output[pixelOffset++] += a * multiplier;
+				trustworthyColorsCount[pixelOffset / 4 - 1] += a ? multiplier : 0;
 			}
-			weight = ratioWeight;
-			do {
-				amountToNext = 1 + actualPosition - currentPosition;
-				multiplier = Math.min(weight, amountToNext);
-				caret = actualPosition;
-				for (pixelOffset = 0; pixelOffset < this.targetWidthMultipliedByChannels;) {
-					r = buffer[caret++];
-					g = buffer[caret++];
-					b = buffer[caret++];
-					a = fourthChannel ? buffer[caret++] : 255;
-					// Ignore RGB values if pixel is completely transparent
-					output[pixelOffset++] += (a ? r : 0) * multiplier;
-					output[pixelOffset++] += (a ? g : 0) * multiplier;
-					output[pixelOffset++] += (a ? b : 0) * multiplier;
-					if (!fourthChannel) {
-						continue;
-					}
-					output[pixelOffset++] += a * multiplier;
-					trustworthyColorsCount[pixelOffset / 4 - 1] += a ? multiplier : 0;
-				}
-				if (weight >= amountToNext) {
-					currentPosition = actualPosition = caret;
-					weight -= amountToNext;
-				} else {
-					currentPosition += weight;
-					break;
-				}
-			} while (weight > 0 && actualPosition < this.widthPassResultSize);
-			for (pixelOffset = 0; pixelOffset < this.targetWidthMultipliedByChannels;) {
-				weight = fourthChannel ? trustworthyColorsCount[pixelOffset / 4] : 1;
-				multiplier = fourthChannel ? weight ? 1 / weight : 0 : ratioWeightDivisor;
-				outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * multiplier);
-				outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * multiplier);
-				outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * multiplier);
-				if (!fourthChannel) {
-					continue;
-				}
-				outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * ratioWeightDivisor);
+			if (weight >= amountToNext) {
+				currentPosition = actualPosition = caret;
+				weight -= amountToNext;
+			} else {
+				currentPosition += weight;
+				break;
 			}
-		} while (outputOffset < this.finalResultSize);
+		} while (weight > 0 && actualPosition < widthPassResultSize);
 		
-		return outputBuffer;
-	}
+		for (pixelOffset = 0; pixelOffset < toWidthBy4; ) {
+			weight = trustworthyColorsCount[pixelOffset / 4];
+			multiplier = weight ? 1 / weight : 0;
+			outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * multiplier);
+			outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * multiplier);
+			outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] * multiplier);
+			outputBuffer[outputOffset++] = Math.round(output[pixelOffset++] / heightRatio);
+		}
+	} while (outputOffset < finalResultSize);
 	
-	resizeHeightInterpolated(buffer) {
-		let ratioWeight = this.ratioWeightHeightPass;
-		let weight = 0;
-		let finalOffset = 0;
-		let pixelOffset = 0;
-		let pixelOffsetAccumulated = 0;
-		let pixelOffsetAccumulated2 = 0;
-		let firstWeight = 0;
-		let secondWeight = 0;
-		let outputBuffer = this.heightBuffer;
-		let interpolationHeightSourceReadStop;
+	return outputBuffer;
+}
+function resizeHeightInterpolated(buffer, sizing) {
+	const {height, heightRatio, toWidthBy4, finalResultSize} = sizing;
+	const outputBuffer = generateUint8Buffer(finalResultSize);
+	
+	let weight = 0;
+	let finalOffset = 0;
+	let pixelOffset = 0;
+	let pixelOffsetAccumulated = 0;
+	let pixelOffsetAccumulated2 = 0;
+	let firstWeight = 0;
+	let secondWeight = 0;
+	let interpolationHeightSourceReadStop;
+	
+	// handle for only one interpolation input being valid for start calculation:
+	for (; weight < 1 / 3; weight += heightRatio) {
+		for (pixelOffset = 0; pixelOffset < toWidthBy4; ) {
+			outputBuffer[finalOffset++] = Math.round(buffer[pixelOffset++]);
+		}
+	}
+	// adjust for overshoot of the last pass's counter:
+	weight -= 1 / 3;
+	
+	for (interpolationHeightSourceReadStop = height - 1; weight < interpolationHeightSourceReadStop; weight += heightRatio) {
+		// calculate weightings
+		secondWeight = weight % 1;
+		firstWeight = 1 - secondWeight;
+		// interpolate
+		pixelOffsetAccumulated = Math.floor(weight) * toWidthBy4;
+		pixelOffsetAccumulated2 = pixelOffsetAccumulated + toWidthBy4;
 		
-		// Handle for only one interpolation input being valid for start calculation:
-		for (; weight < 1 / 3; weight += ratioWeight) {
-			for (pixelOffset = 0; pixelOffset < this.targetWidthMultipliedByChannels;) {
-				outputBuffer[finalOffset++] = Math.round(buffer[pixelOffset++]);
-			}
+		for (pixelOffset = 0; pixelOffset < toWidthBy4; ++pixelOffset) {
+			outputBuffer[finalOffset++] = Math.round(buffer[pixelOffsetAccumulated++] * firstWeight + buffer[pixelOffsetAccumulated2++] * secondWeight);
 		}
-		// Adjust for overshoot of the last pass's counter:
-		weight -= 1 / 3;
-		for (interpolationHeightSourceReadStop = this.heightOriginal - 1; weight < interpolationHeightSourceReadStop; weight += ratioWeight) {
-			// Calculate weightings:
-			secondWeight = weight % 1;
-			firstWeight = 1 - secondWeight;
-			// Interpolate:
-			pixelOffsetAccumulated = Math.floor(weight) * this.targetWidthMultipliedByChannels;
-			pixelOffsetAccumulated2 = pixelOffsetAccumulated + this.targetWidthMultipliedByChannels;
-			for (pixelOffset = 0; pixelOffset < this.targetWidthMultipliedByChannels; ++pixelOffset) {
-				outputBuffer[finalOffset++] = Math.round(buffer[pixelOffsetAccumulated++] * firstWeight + buffer[pixelOffsetAccumulated2++] * secondWeight);
-			}
+	}
+	// handle for only one interpolation input being valid for end calculation:
+	while (finalOffset < finalResultSize) {
+		for (pixelOffset = 0, pixelOffsetAccumulated = interpolationHeightSourceReadStop * toWidthBy4; pixelOffset < toWidthBy4; ++pixelOffset) {
+			outputBuffer[finalOffset++] = Math.round(buffer[pixelOffsetAccumulated++]);
 		}
-		// Handle for only one interpolation input being valid for end calculation:
-		while (finalOffset < this.finalResultSize) {
-			for (pixelOffset = 0, pixelOffsetAccumulated = interpolationHeightSourceReadStop * this.targetWidthMultipliedByChannels; pixelOffset < this.targetWidthMultipliedByChannels; ++pixelOffset) {
-				outputBuffer[finalOffset++] = Math.round(buffer[pixelOffsetAccumulated++]);
-			}
-		}
-		return outputBuffer;
 	}
 	
-	resizeHeightRGB(buffer) {
-		return this._resizeHeightRGBChannels(buffer, false);
-	}
-	
-	resizeHeightRGBA(buffer) {
-		return this._resizeHeightRGBChannels(buffer, true);
-	}
+	return outputBuffer;
 }
 
 /**
  * 
- * @param {Number|String} w absolute size if number, string as `33.4%` for percentage
- * @param {Number|String} [h] if not provided it will be the same ratio as width
+ * @param {Number|String} toWidth absolute size if number, string as `33.4%` for percentage
+ * @param {Number|String} [toHeight] if not provided it will be the same ratio as width
  */
-export default function(w, h) {
+export default function(toWidth, toHeight) {
 	let {width, height, _bitmap: bitmap} = this;
 	
-	if (/\d+(\.\d+)?%/.test(w)) {
-		w = Math.round(parseFloat(w) * width / 100);
+	if (/\d+(\.\d+)?%/.test(toWidth)) {
+		toWidth = Math.round(parseFloat(toWidth) * width / 100);
 	} else {
-		w = Math.round(w);
+		toWidth = Math.round(toWidth);
 	}
 	
-	if (h) {
-		if (/\d+(\.\d+)?%/.test(h)) {
-			h = Math.round(parseFloat(h) * width / 100);
+	if (toHeight) {
+		if (/\d+(\.\d+)?%/.test(toHeight)) {
+			toHeight = Math.round(parseFloat(toHeight) * width / 100);
 		} else {
-			h = Math.round(h);
+			toHeight = Math.round(toHeight);
 		}
 	} else {
-		h = Math.round(height * w / width);
+		toHeight = Math.round(height * toWidth / width);
 	}
 	
-	if (!w || !h) {
+	if (!toWidth || !toHeight) {
 		return this;
 	}
 	
-//	bitmap.data = new Resize(bitmap.data, width, height, w, h, true).FUCK;
-	bitmap.data = new Resize(bitmap.data, width, height, w, h, true).FUCK;
-	bitmap.width = w;
-	bitmap.height = h;
+	let widthRatio = width / toWidth;
+	let heightRatio = height / toHeight;
+	
+	if (widthRatio === 1 && heightRatio === 1) {
+		return this;
+	}
+	
+	let sizing = {
+		width,
+		toWidth,
+		height,
+		toHeight,
+		// the value belows will be used repeatedly to save time
+		widthRatio,
+		heightRatio,
+		widthBy4: width * 4,
+		toWidthBy4: toWidth * 4,
+		heightBy4: height * 4,
+		toHeightBy4: toHeight * 4,
+		finalResultSize: toWidth * toHeight * 4
+	};
+	let buffer = bitmap.data;
+	
+	if (widthRatio > 1) {
+		buffer = resizeWidthRGB(buffer, sizing);
+	} else if (widthRatio < 1) { // && interpolationPass
+		buffer = resizeWidthInterpolated(buffer, sizing);
+	} // else == 1 ignore 
+	
+	if (heightRatio > 1) {
+		buffer = resizeHeightRGB(buffer, sizing);
+	} else if (heightRatio < 1) { //  && interpolationPass
+		buffer = resizeHeightInterpolated(buffer, sizing);
+	} // else === 1 ignore
+	
+	bitmap.data = new Buffer(buffer);
+	bitmap.width = toWidth;
+	bitmap.height = toHeight;
 	
 	return this;
 };

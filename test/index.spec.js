@@ -315,9 +315,9 @@ describe("nomage", function() {
 			it("png crop", testOpAndSaveGen(true, "crop")(IMAGES.PNG, testOnSaved));
 		});
 		describe("resize", () => {
-			it("bmp resize", testOpAndSaveGen("resize", "75%")(IMAGES.BMP));
+			it("bmp resize", testOpAndSaveGen("resize", "175%", "100%")(IMAGES.BMP));
 			it("jpg resize", testOpAndSaveGen("resize", "85%")(IMAGES.JPG));
-			it("png resize", testOpAndSaveGen("resize", "50%")(IMAGES.PNG));
+			it("png resize", testOpAndSaveGen("resize", "50%", "100%")(IMAGES.PNG));
 		});
 	});
 });
