@@ -37,7 +37,7 @@ class BmpDecoder {
 		this.width = width;
 		this.height = height;
 		
-		this.pos = BMP.DATA_OFFSET;
+		let pos = BMP.DATA_OFFSET;
 		
 		if (bitPP === 16 && withAlpha) {
 			bitPP = 15;
@@ -49,10 +49,10 @@ class BmpDecoder {
 			this.palette = new Array(len);
 			
 			for (let i = 0; i < len; i++) {
-				let blue = buffer.readUInt8(this.pos++);
-				let green = buffer.readUInt8(this.pos++);
-				let red = buffer.readUInt8(this.pos++);
-				let quad = buffer.readUInt8(this.pos++);
+				let blue = buffer.readUInt8(pos++);
+				let green = buffer.readUInt8(pos++);
+				let red = buffer.readUInt8(pos++);
+				let quad = buffer.readUInt8(pos++);
 				
 				this.palette[i] = {
 					red: red,
@@ -65,25 +65,24 @@ class BmpDecoder {
 //		this.parseHeader();
 		
 //		this.parseBGR();
-		this.pos = header.offset;
 		this.data = new Buffer(width * height * 4);
 		
 		try {
-			this["bit" + bitPP]();
+			this["bit" + bitPP](header.offset);
 		} catch (ex) {
 			console.log("bit decode error: " + ex);
 		}
 //		this.parseBGR();
 	}
 	
-	bit1() {
+	bit1(pos) {
 		const {data, buffer, palette, width, height} = this;
 		let xlen = Math.ceil(width / 8);
 		let mode = xlen % 4;
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < xlen; x++) {
-				let b = buffer.readUInt8(this.pos++);
+				let b = buffer.readUInt8(pos++);
 				let location = y * width * 4 + x * 8 * 4;
 				for (let i = 0; i < 8; i++) {
 					if (x * 8 + i < width) {
@@ -100,19 +99,19 @@ class BmpDecoder {
 			}
 			
 			if (mode != 0) {
-				this.pos += 4 - mode;
+				pos += 4 - mode;
 			}
 		}
 	}
 	
-	bit4() {
+	bit4(pos) {
 		const {data, buffer, palette, width, height} = this;
 		let xlen = Math.ceil(width / 2);
 		let mode = xlen % 4;
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < xlen; x++) {
-				let b = buffer.readUInt8(this.pos++);
+				let b = buffer.readUInt8(pos++);
 				let location = y * width * 4 + x * 2 * 4;
 				let before = b >> 4;
 				let after = b & 0x0F;
@@ -135,18 +134,18 @@ class BmpDecoder {
 			}
 			
 			if (mode != 0) {
-				this.pos += 4 - mode;
+				pos += 4 - mode;
 			}
 		}
 	}
 	
-	bit8() {
+	bit8(pos) {
 		let {data, buffer, palette, width, height} = this;
 		let mode = width % 4;
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < width; x++) {
-				let b = buffer.readUInt8(this.pos++);
+				let b = buffer.readUInt8(pos++);
 				let location = y * width * 4 + x * 4;
 				
 				if (b < palette.length) {
@@ -164,12 +163,12 @@ class BmpDecoder {
 				}
 			}
 			if (mode != 0) {
-				this.pos += 4 - mode;
+				pos += 4 - mode;
 			}
 		}
 	}
 	
-	bit15() {
+	bit15(pos) {
 		const {data, buffer, width, height} = this;
 		let dif_w = width % 3;
 		let _11111 = parseInt("11111", 2);
@@ -177,9 +176,9 @@ class BmpDecoder {
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < width; x++) {
-				let B = buffer.readUInt16LE(this.pos);
+				let B = buffer.readUInt16LE(pos);
 				
-				this.pos += 2;
+				pos += 2;
 				
 				let blue = (B & _1_5) / _1_5 * 255 | 0;
 				let green = (B >> 5 & _1_5 ) / _1_5 * 255 | 0;
@@ -193,11 +192,11 @@ class BmpDecoder {
 				data[location + 3] = alpha;
 			}
 			
-			this.pos += dif_w;
+			pos += dif_w;
 		}
 	}
 	
-	bit16() {
+	bit16(pos) {
 		const {data, buffer, width, height} = this;
 		let dif_w = width % 3;
 		let _11111 = parseInt("11111", 2);
@@ -207,9 +206,9 @@ class BmpDecoder {
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < width; x++) {
-				let B = buffer.readUInt16LE(this.pos);
+				let B = buffer.readUInt16LE(pos);
 				
-				this.pos += 2;
+				pos += 2;
 				
 				let alpha = 0xFF;
 				let blue = (B & _1_5) / _1_5 * 255 | 0;
@@ -223,18 +222,18 @@ class BmpDecoder {
 				data[location + 3] = alpha;
 			}
 			
-			this.pos += dif_w;
+			pos += dif_w;
 		}
 	}
 	
-	bit24() {
+	bit24(pos) {
 		const {data, buffer, width, height} = this;
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < width; x++) {
-				let blue = buffer.readUInt8(this.pos++);
-				let green = buffer.readUInt8(this.pos++);
-				let red = buffer.readUInt8(this.pos++);
+				let blue = buffer.readUInt8(pos++);
+				let green = buffer.readUInt8(pos++);
+				let red = buffer.readUInt8(pos++);
 				let location = y * width * 4 + x * 4;
 				
 				data[location] = red;
@@ -243,20 +242,20 @@ class BmpDecoder {
 				data[location + 3] = 0xFF;
 			}
 			
-			this.pos += width % 4;
+			pos += width % 4;
 		}
 		
 	}
 	
-	bit32() {
+	bit32(pos) {
 		const {data, buffer, width, height} = this;
 		
 		for (let y = height - 1; y >= 0; y--) {
 			for (let x = 0; x < width; x++) {
-				let blue = buffer.readUInt8(this.pos++);
-				let green = buffer.readUInt8(this.pos++);
-				let red = buffer.readUInt8(this.pos++);
-				let alpha = buffer.readUInt8(this.pos++);
+				let blue = buffer.readUInt8(pos++);
+				let green = buffer.readUInt8(pos++);
+				let red = buffer.readUInt8(pos++);
+				let alpha = buffer.readUInt8(pos++);
 				let location = y * width * 4 + x * 4;
 				
 				data[location] = red;
@@ -265,7 +264,7 @@ class BmpDecoder {
 				data[location + 3] = alpha;
 			}
 			
-			this.pos += width % 4;
+			pos += width % 4;
 		}
 		
 	}
