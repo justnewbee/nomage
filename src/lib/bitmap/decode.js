@@ -9,12 +9,12 @@ const requestFile = request.defaults({
 import {MIME} from "../const";
 import fileMime from "../file/mime";
 
-import bmpParse from "./bmp/parse";
-import jpgParse from "./jpg/parse";
-import pngParse from "./png/parse";
+import bmpDecode from "./bmp/decode";
+import jpgDecode from "./jpg/decode";
+import pngDecode from "./png/decode";
 
 /**
- * convert file into a bitmap object
+ * decode an image file, whether local file path, url or just a file buffer, into a bitmap object - which then can be used to perform image edting actions
  * @param {String|Buffer} file when string it can be file local path or a url
  * @return {Promise.<Object>} bitmap object { width, height, mime, data, data_ }
  */
@@ -51,13 +51,13 @@ export default file => new Promise((resolve, reject) => {
 	
 	switch (mime) {
 	case MIME.BMP:
-		bitMap = bmpParse(buffer);
+		bitMap = bmpDecode(buffer);
 		break;
 	case MIME.JPG:
-		bitMap = jpgParse(buffer);
+		bitMap = jpgDecode(buffer);
 		break;
 	case MIME.PNG:
-		bitMap = pngParse(buffer);
+		bitMap = pngDecode(buffer);
 		break;
 	default:
 		throw new Error(`[bitmap/parse] unsupported mime "${mime}"`);

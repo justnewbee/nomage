@@ -1,7 +1,7 @@
 /**
  * @author shaozilee
  *
- * BMP format encoder,encode 24bit BMP
+ * BMP format encoder, encode 24bit BMP
  * Not support quality compression
  */
 class BmpEncoder {

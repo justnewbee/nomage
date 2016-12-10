@@ -1,8 +1,8 @@
 import path from "path";
 import fs from "fs";
 
-import bitmapParse from "./lib/bitmap/parse";
-import bitmapUnparse from "./lib/bitmap/unparse";
+import bitmapDecode from "./lib/bitmap/decode";
+import bitmapEncode from "./lib/bitmap/encode";
 import fileSave from "./lib/file/save";
 
 //function createBitmapFromScratch(w, h, fill) {
@@ -125,7 +125,7 @@ class Image {
 	 * @returns {Promise}
 	 */
 	save(savePath) {
-		return bitmapUnparse(this._bitmap).then(buffer => fileSave(buffer, savePath));
+		return bitmapEncode(this._bitmap).then(buffer => fileSave(buffer, savePath));
 	}
 }
 
@@ -161,5 +161,5 @@ export default file => {
 //		throw new Error("no matching constructor overloading was found. Please see the docs for how to call the Image constructor.");
 //	}
 	
-	return bitmapParse(file).then(bitmap => new Image(bitmap));
+	return bitmapDecode(file).then(bitmap => new Image(bitmap));
 };

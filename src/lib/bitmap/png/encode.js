@@ -1,6 +1,6 @@
 import {PNG} from "pngjs";
 
-import streamToBuffer from "../../stream-to-buffer";
+//import streamToBuffer from "../../stream-to-buffer";
 
 //export default (bitmap, {
 //	bitDepth = 8,
