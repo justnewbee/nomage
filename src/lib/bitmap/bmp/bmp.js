@@ -1,3 +1,6 @@
+/**
+ * BMP constants
+ */
 export default {
 	/* 
 	 * see https://en.wikipedia.org/wiki/BMP_file_format for detailed bmp structure

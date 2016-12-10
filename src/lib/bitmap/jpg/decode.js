@@ -5,7 +5,7 @@
 // - The Adobe Application-Specific JPEG markers in the Supporting the DCT Filters
 //   in PostScript Level 2, Technical Note #5116
 //   (partners.adobe.com/public/developer/en/ps/sdk/5116.DCT_Filter.pdf)
-import JPG from "./const";
+import JPG from "./jpg";
 import {each, bitShiftL, bitShiftR, bitAnd, bitOr} from "../../util";
 
 const dctZigZag = new Int32Array([

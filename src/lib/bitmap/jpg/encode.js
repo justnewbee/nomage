@@ -1,4 +1,4 @@
-import JPG from "./const";
+import JPG from "./jpg";
 import {bitShiftL, bitShiftR, bitAnd, bitOr} from "../../util";
 
 const ZIG_ZAG = [
