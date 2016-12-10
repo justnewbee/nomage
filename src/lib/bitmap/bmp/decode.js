@@ -1,60 +1,58 @@
+import BMP from "./bmp";
+
 /**
  * Bmp format decoder, support 1bit 4bit 8bit 24bit bmp.
  */
 class BmpDecoder {
 	constructor(buffer, withAlpha) {
-		this.pos = 0;
 		this.buffer = buffer;
-		this.withAlpha = !!withAlpha;
 		
-		this.flag = this.buffer.toString("utf-8", 0, 2);
+		this.flag = buffer.toString("utf-8", 0, 2);
 		if (this.flag != "BM") {
 			throw new Error("Invalid BMP File");
 		}
 		
 //		this.parseHeader();
-		this.pos += 2;
-		this.fileSize = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.reserved = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.offset = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.headerSize = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.width = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.height = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.planes = this.buffer.readUInt16LE(this.pos);
-		this.pos += 2;
-		this.bitPP = this.buffer.readUInt16LE(this.pos);
-		this.pos += 2;
-		this.compress = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.rawSize = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.hr = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.vr = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.colors = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
-		this.importantColors = this.buffer.readUInt32LE(this.pos);
-		this.pos += 4;
+		let header = {
+			// file header 0 - 13
+			size: buffer.readUInt32LE(2), // 2-5
+	//		reserved1: buffer.readUInt16LE(6), // 6 - 7 <- useless
+	//		reserved2: buffer.readUInt16LE(6), // 8 - 9 <- useless
+			offset: buffer.readUInt32LE(10), // 10 - 13
+			headerSize: buffer.readUInt32LE(14), // 14 - 17
+			width: buffer.readUInt32LE(18), // 18 - 21
+			height: buffer.readUInt32LE(22), // 22 - 25 <-- FIXME cannot get it right when the BMP is generated in mac...
+			planes: buffer.readUInt16LE(26), // 26 - 27
+			bitPP: buffer.readUInt16LE(28), // 30 - 31
+			compress: buffer.readUInt32LE(32), // 32 - 35
+			rawSize: buffer.readUInt32LE(36), // 36 - 39
+			hr: buffer.readUInt32LE(40), // 40 - 43
+			vr: buffer.readUInt32LE(44), // 44 - 47
+			colors: buffer.readUInt32LE(48), // 48 - 51
+			importantColors: buffer.readUInt32LE(52), // 52 - 55
+		};
 		
-		if (this.bitPP === 16 && this.withAlpha) {
-			this.bitPP = 15;
+		let {width, height, bitPP} = header;
+		
+		this.width = width;
+		this.height = height;
+		
+		this.pos = BMP.DATA_OFFSET;
+		
+		if (bitPP === 16 && withAlpha) {
+			bitPP = 15;
 		}
 		
-		if (this.bitPP < 15) {
-			let len = this.colors === 0 ? 1 << this.bitPP : this.colors;
+		if (bitPP < 15) {
+			let len = header.colors === 0 ? 1 << bitPP : header.colors;
+			
 			this.palette = new Array(len);
+			
 			for (let i = 0; i < len; i++) {
-				let blue = this.buffer.readUInt8(this.pos++);
-				let green = this.buffer.readUInt8(this.pos++);
-				let red = this.buffer.readUInt8(this.pos++);
-				let quad = this.buffer.readUInt8(this.pos++);
+				let blue = buffer.readUInt8(this.pos++);
+				let green = buffer.readUInt8(this.pos++);
+				let red = buffer.readUInt8(this.pos++);
+				let quad = buffer.readUInt8(this.pos++);
 				
 				this.palette[i] = {
 					red: red,
@@ -67,11 +65,11 @@ class BmpDecoder {
 //		this.parseHeader();
 		
 //		this.parseBGR();
-		this.pos = this.offset;
-		this.data = new Buffer(this.width * this.height * 4);
+		this.pos = header.offset;
+		this.data = new Buffer(width * height * 4);
 		
 		try {
-			this["bit" + this.bitPP]();
+			this["bit" + bitPP]();
 		} catch (ex) {
 			console.log("bit decode error: " + ex);
 		}

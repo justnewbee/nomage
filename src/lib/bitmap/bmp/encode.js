@@ -2,7 +2,7 @@ import BMP from "./bmp";
 
 /**
  * BMP format encoder, encode 24bit BMP
- * Not support quality compression
+ * not support quality compression
  */
 export default bitmap => {
 	const {data, width, height} = bitmap;
