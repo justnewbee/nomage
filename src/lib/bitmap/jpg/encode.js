@@ -84,126 +84,299 @@ const STD_AC_CHROMINANCE_VALUES = [
 	0xf9, 0xfa
 ];
 
-export default (bitmap, quality = 100) => {
-	let YTable = new Array(64);
-	let UVTable = new Array(64);
-	let fdtblY = new Array(64);
-	let fdtblUV = new Array(64);
-	let YDC_HT;
-	let UVDC_HT;
-	let YAC_HT;
-	let UVAC_HT;
+function computeHuffmanTbl(nrCodes, stdTable) {
+	let codeValue = 0;
+	let posInTable = 0;
+	let huffTable = [];
 	
-	let bitcode = new Array(65535);
+	for (let k = 1; k <= 16; k++) {
+		for (let j = 1; j <= nrCodes[k]; j++) {
+			huffTable[stdTable[posInTable]] = [];
+			huffTable[stdTable[posInTable]][0] = codeValue;
+			huffTable[stdTable[posInTable]][1] = k;
+			posInTable++;
+			codeValue++;
+		}
+		codeValue *= 2;
+	}
+	
+	return huffTable;
+}
+
+const YDC_HT = computeHuffmanTbl(STD_DC_LUMINANCE_NR_CODES, STD_DC_LUMINANCE_VALUES);
+const UVDC_HT = computeHuffmanTbl(STD_DC_CHROMINANCE_NR_CODES, STD_DC_CHROMINANCE_VALUES);
+const YAC_HT = computeHuffmanTbl(STD_AC_LUMINANCE_NR_CODES, STD_AC_LUMINANCE_VALUES);
+const UVAC_HT = computeHuffmanTbl(STD_AC_CHROMINANCE_NR_CODES, STD_AC_CHROMINANCE_VALUES);
+const RGB_YUV_TABLE = (() => {
+	let table = new Array(2048);
+	
+	for (let i = 0; i < 256; i++) {
+		table[i] = 19595 * i;
+		table[i + 256] = 38470 * i;
+		table[i + 512] = 7471 * i + 0x8000;
+		table[i + 768] = -11059 * i;
+		table[i + 1024] = -21709 * i;
+		table[i + 1280] = 32768 * i + 0x807FFF;
+		table[i + 1536] = -27439 * i;
+		table[i + 1792] = -5329 * i;
+	}
+	
+	return table;
+})();
+const [CATEGORY, BIT_CODE] = (() => {
 	let category = new Array(65535);
-	let outputfDCTQuant = new Array(64);
-	let DU = new Array(64);
-	let byteout = [];
-	let bytenew = 0;
-	let bytepos = 7;
+	let bitcode = new Array(65535);
 	
+	let nrLower = 1;
+	let nrUpper = 2;
+	for (let cat = 1; cat <= 15; cat++) {
+		// positive numbers
+		for (let nr = nrLower; nr < nrUpper; nr++) {
+			category[32767 + nr] = cat;
+			bitcode[32767 + nr] = [];
+			bitcode[32767 + nr][1] = cat;
+			bitcode[32767 + nr][0] = nr;
+		}
+		// negative numbers
+		for (let nrNeg = -(nrUpper - 1); nrNeg <= -nrLower; nrNeg++) {
+			category[32767 + nrNeg] = cat;
+			bitcode[32767 + nrNeg] = [];
+			bitcode[32767 + nrNeg][1] = cat;
+			bitcode[32767 + nrNeg][0] = nrUpper - 1 + nrNeg;
+		}
+		
+		nrLower <<= 1;
+		nrUpper <<= 1;
+	}
+	
+	return [category, bitcode];
+})();
+const QUANTIZE_TABLE_MAP = {};
+const AASF = [
+	1.0, 1.387039845, 1.306562965, 1.175875602,
+	1.0, 0.785694958, 0.541196100, 0.275899379
+];
+
+// DCT & quantization core
+function fDCTQuantize(dataArr, fdtbl) {
+	let outputfDCTQuant = new Array(64);
+	let d0;
+	let d1;
+	let d2;
+	let d3;
+	let d4;
+	let d5;
+	let d6;
+	let d7;
+	// pass 1: process rows
+	let dataOff = 0;
+	let i;
+	
+	const I8 = 8;
+	const I64 = 64;
+	
+	for (i = 0; i < I8; ++i) {
+		d0 = dataArr[dataOff];
+		d1 = dataArr[dataOff + 1];
+		d2 = dataArr[dataOff + 2];
+		d3 = dataArr[dataOff + 3];
+		d4 = dataArr[dataOff + 4];
+		d5 = dataArr[dataOff + 5];
+		d6 = dataArr[dataOff + 6];
+		d7 = dataArr[dataOff + 7];
+		
+		let tmp0 = d0 + d7;
+		let tmp7 = d0 - d7;
+		let tmp1 = d1 + d6;
+		let tmp6 = d1 - d6;
+		let tmp2 = d2 + d5;
+		let tmp5 = d2 - d5;
+		let tmp3 = d3 + d4;
+		let tmp4 = d3 - d4;
+		
+		/* Even part */
+		let tmp10 = tmp0 + tmp3;
+		/* phase 2 */
+		let tmp13 = tmp0 - tmp3;
+		let tmp11 = tmp1 + tmp2;
+		let tmp12 = tmp1 - tmp2;
+		
+		dataArr[dataOff] = tmp10 + tmp11;
+		/* phase 3 */
+		dataArr[dataOff + 4] = tmp10 - tmp11;
+		
+		let z1 = (tmp12 + tmp13) * 0.707106781;
+		/* c4 */
+		dataArr[dataOff + 2] = tmp13 + z1;
+		/* phase 5 */
+		dataArr[dataOff + 6] = tmp13 - z1;
+		
+		/* Odd part */
+		tmp10 = tmp4 + tmp5;
+		/* phase 2 */
+		tmp11 = tmp5 + tmp6;
+		tmp12 = tmp6 + tmp7;
+		
+		/* The rotator is modified from fig 4-8 to avoid extra negations. */
+		let z5 = (tmp10 - tmp12) * 0.382683433;
+		/* c6 */
+		let z2 = 0.541196100 * tmp10 + z5;
+		/* c2-c6 */
+		let z4 = 1.306562965 * tmp12 + z5;
+		/* c2+c6 */
+		let z3 = tmp11 * 0.707106781;
+		/* c4 */
+		
+		let z11 = tmp7 + z3;
+		/* phase 5 */
+		let z13 = tmp7 - z3;
+		
+		dataArr[dataOff + 5] = z13 + z2;
+		/* phase 6 */
+		dataArr[dataOff + 3] = z13 - z2;
+		dataArr[dataOff + 1] = z11 + z4;
+		dataArr[dataOff + 7] = z11 - z4;
+		
+		dataOff += 8;
+		/* advance pointer to next row */
+	}
+	
+	/* Pass 2: process columns. */
+	dataOff = 0;
+	for (i = 0; i < I8; ++i) {
+		d0 = dataArr[dataOff];
+		d1 = dataArr[dataOff + 8];
+		d2 = dataArr[dataOff + 16];
+		d3 = dataArr[dataOff + 24];
+		d4 = dataArr[dataOff + 32];
+		d5 = dataArr[dataOff + 40];
+		d6 = dataArr[dataOff + 48];
+		d7 = dataArr[dataOff + 56];
+		
+		let tmp0p2 = d0 + d7;
+		let tmp7p2 = d0 - d7;
+		let tmp1p2 = d1 + d6;
+		let tmp6p2 = d1 - d6;
+		let tmp2p2 = d2 + d5;
+		let tmp5p2 = d2 - d5;
+		let tmp3p2 = d3 + d4;
+		let tmp4p2 = d3 - d4;
+		
+		/* Even part */
+		let tmp10p2 = tmp0p2 + tmp3p2;
+		/* phase 2 */
+		let tmp13p2 = tmp0p2 - tmp3p2;
+		let tmp11p2 = tmp1p2 + tmp2p2;
+		let tmp12p2 = tmp1p2 - tmp2p2;
+		
+		dataArr[dataOff] = tmp10p2 + tmp11p2;
+		/* phase 3 */
+		dataArr[dataOff + 32] = tmp10p2 - tmp11p2;
+		
+		let z1p2 = (tmp12p2 + tmp13p2) * 0.707106781;
+		/* c4 */
+		dataArr[dataOff + 16] = tmp13p2 + z1p2;
+		/* phase 5 */
+		dataArr[dataOff + 48] = tmp13p2 - z1p2;
+		
+		/* Odd part */
+		tmp10p2 = tmp4p2 + tmp5p2;
+		/* phase 2 */
+		tmp11p2 = tmp5p2 + tmp6p2;
+		tmp12p2 = tmp6p2 + tmp7p2;
+		
+		/* The rotator is modified from fig 4-8 to avoid extra negations. */
+		let z5p2 = (tmp10p2 - tmp12p2) * 0.382683433;
+		/* c6 */
+		let z2p2 = 0.541196100 * tmp10p2 + z5p2;
+		/* c2-c6 */
+		let z4p2 = 1.306562965 * tmp12p2 + z5p2;
+		/* c2+c6 */
+		let z3p2 = tmp11p2 * 0.707106781;
+		/* c4 */
+		
+		let z11p2 = tmp7p2 + z3p2;
+		/* phase 5 */
+		let z13p2 = tmp7p2 - z3p2;
+		
+		dataArr[dataOff + 40] = z13p2 + z2p2;
+		/* phase 6 */
+		dataArr[dataOff + 24] = z13p2 - z2p2;
+		dataArr[dataOff + 8] = z11p2 + z4p2;
+		dataArr[dataOff + 56] = z11p2 - z4p2;
+		
+		dataOff++;
+		/* advance pointer to next column */
+	}
+	
+	// Quantize/descale the coefficients
+	let n;
+	for (i = 0; i < I64; ++i) {
+		// apply the quantization and scaling factor & Round to nearest integer
+		n = dataArr[i] * fdtbl[i];
+		outputfDCTQuant[i] = n > 0.0 ? bitOr(n + 0.5, 0) : bitOr(n - 0.5, 0);
+	}
+	
+	return outputfDCTQuant;
+}
+function getQuantizeTables(sf) {
+	if (QUANTIZE_TABLE_MAP[sf]) {
+		return QUANTIZE_TABLE_MAP[sf];
+	}
+	
+	const yTable = new Array(64);
+	const uvTable = new Array(64);
+	const fdYTable = new Array(64);
+	const fdUvTable = new Array(64);
+	
+	for (let i = 0; i < 64; i++) {
+		let t = Math.floor((YQT[i] * sf + 50) / 100);
+		if (t < 1) {
+			t = 1;
+		} else if (t > 255) {
+			t = 255;
+		}
+		yTable[ZIG_ZAG[i]] = t;
+	}
+	
+	for (let j = 0; j < 64; j++) {
+		let u = Math.floor((UVQT[j] * sf + 50) / 100);
+		if (u < 1) {
+			u = 1;
+		} else if (u > 255) {
+			u = 255;
+		}
+		uvTable[ZIG_ZAG[j]] = u;
+	}
+	
+	let k = 0;
+	
+	for (let row = 0; row < 8; row++) {
+		for (let col = 0; col < 8; col++) {
+			fdYTable[k] = 1.0 / (yTable [ZIG_ZAG[k]] * AASF[row] * AASF[col] * 8.0);
+			fdUvTable[k] = 1.0 / (uvTable[ZIG_ZAG[k]] * AASF[row] * AASF[col] * 8.0);
+			k++;
+		}
+	}
+	
+	QUANTIZE_TABLE_MAP[sf] = [yTable, uvTable, fdYTable, fdUvTable];
+	
+	return QUANTIZE_TABLE_MAP[sf];
+}
+
+export default (bitmap, quality = 100) => {
+	quality = Math.min(100, Math.max(1, quality));
+	
+	const {data, width, height} = bitmap;
+	const [yTable, uvTable, fdYTable, fdUvTable] = getQuantizeTables(quality < 50 ? Math.floor(5000 / quality) : Math.floor(200 - quality * 2));
+	
+	let DU = new Array(64);
 	let YDU = new Array(64);
 	let UDU = new Array(64);
 	let VDU = new Array(64);
-	let clt = new Array(256);
-	let RGB_YUV_TABLE = new Array(2048);
-	let currentQuality;
-	
-	function initQuantTables(sf) {
-		for (let i = 0; i < 64; i++) {
-			let t = Math.floor((YQT[i] * sf + 50) / 100);
-			if (t < 1) {
-				t = 1;
-			} else if (t > 255) {
-				t = 255;
-			}
-			YTable[ZIG_ZAG[i]] = t;
-		}
-		
-		for (let j = 0; j < 64; j++) {
-			let u = Math.floor((UVQT[j] * sf + 50) / 100);
-			if (u < 1) {
-				u = 1;
-			} else if (u > 255) {
-				u = 255;
-			}
-			UVTable[ZIG_ZAG[j]] = u;
-		}
-		let aasf = [
-			1.0, 1.387039845, 1.306562965, 1.175875602,
-			1.0, 0.785694958, 0.541196100, 0.275899379
-		];
-		let k = 0;
-		for (let row = 0; row < 8; row++) {
-			for (let col = 0; col < 8; col++) {
-				fdtblY[k] = 1.0 / (YTable [ZIG_ZAG[k]] * aasf[row] * aasf[col] * 8.0);
-				fdtblUV[k] = 1.0 / (UVTable[ZIG_ZAG[k]] * aasf[row] * aasf[col] * 8.0);
-				k++;
-			}
-		}
-	}
-	
-	function computeHuffmanTbl(nrcodes, stdTable) {
-		let codeValue = 0;
-		let posInTable = 0;
-		let HT = [];
-		
-		for (let k = 1; k <= 16; k++) {
-			for (let j = 1; j <= nrcodes[k]; j++) {
-				HT[stdTable[posInTable]] = [];
-				HT[stdTable[posInTable]][0] = codeValue;
-				HT[stdTable[posInTable]][1] = k;
-				posInTable++;
-				codeValue++;
-			}
-			codeValue *= 2;
-		}
-		return HT;
-	}
-	
-	function initHuffmanTbl() {
-		YDC_HT = computeHuffmanTbl(STD_DC_LUMINANCE_NR_CODES, STD_DC_LUMINANCE_VALUES);
-		UVDC_HT = computeHuffmanTbl(STD_DC_CHROMINANCE_NR_CODES, STD_DC_CHROMINANCE_VALUES);
-		YAC_HT = computeHuffmanTbl(STD_AC_LUMINANCE_NR_CODES, STD_AC_LUMINANCE_VALUES);
-		UVAC_HT = computeHuffmanTbl(STD_AC_CHROMINANCE_NR_CODES, STD_AC_CHROMINANCE_VALUES);
-	}
-	
-	function initCategoryNumber() {
-		let nrLower = 1;
-		let nrUpper = 2;
-		for (let cat = 1; cat <= 15; cat++) {
-			// positive numbers
-			for (let nr = nrLower; nr < nrUpper; nr++) {
-				category[32767 + nr] = cat;
-				bitcode[32767 + nr] = [];
-				bitcode[32767 + nr][1] = cat;
-				bitcode[32767 + nr][0] = nr;
-			}
-			// negative numbers
-			for (let nrNeg = -(nrUpper - 1); nrNeg <= -nrLower; nrNeg++) {
-				category[32767 + nrNeg] = cat;
-				bitcode[32767 + nrNeg] = [];
-				bitcode[32767 + nrNeg][1] = cat;
-				bitcode[32767 + nrNeg][0] = nrUpper - 1 + nrNeg;
-			}
-			
-			nrLower <<= 1;
-			nrUpper <<= 1;
-		}
-	}
-	
-	function initRGBYUVTable() {
-		for (let i = 0; i < 256; i++) {
-			RGB_YUV_TABLE[i] = 19595 * i;
-			RGB_YUV_TABLE[i + 256] = 38470 * i;
-			RGB_YUV_TABLE[i + 512] = 7471 * i + 0x8000;
-			RGB_YUV_TABLE[i + 768] = -11059 * i;
-			RGB_YUV_TABLE[i + 1024] = -21709 * i;
-			RGB_YUV_TABLE[i + 1280] = 32768 * i + 0x807FFF;
-			RGB_YUV_TABLE[i + 1536] = -27439 * i;
-			RGB_YUV_TABLE[i + 1792] = -5329 * i;
-		}
-	}
+	let byteOut = [];
+	let byteNew = 0;
+	let bytePos = 7;
 	
 	// IO functions
 	function writeBits(bs) {
@@ -212,192 +385,30 @@ export default (bitmap, quality = 100) => {
 		
 		while (posval >= 0) {
 			if (bitAnd(value, bitShiftL(1, posval))) {
-				bytenew |= bitShiftL(1, bytepos);
+				byteNew |= bitShiftL(1, bytePos);
 			}
 			posval--;
-			bytepos--;
-			if (bytepos < 0) {
-				if (bytenew == 0xFF) {
+			bytePos--;
+			if (bytePos < 0) {
+				if (byteNew == 0xFF) {
 					writeByte(0xFF);
 					writeByte(0);
 				} else {
-					writeByte(bytenew);
+					writeByte(byteNew);
 				}
-				bytepos = 7;
-				bytenew = 0;
+				bytePos = 7;
+				byteNew = 0;
 			}
 		}
 	}
 	
 	function writeByte(value) {
-		byteout.push(value);
+		byteOut.push(value);
 	}
 	
 	function writeWord(value) {
 		writeByte(bitAnd(bitShiftR(value, 8), 0xFF));
 		writeByte(bitAnd(value, 0xFF));
-	}
-	
-	// DCT & quantization core
-	function fDCTQuantize(data, fdtbl) {
-		let d0;
-		let d1;
-		let d2;
-		let d3;
-		let d4;
-		let d5;
-		let d6;
-		let d7;
-		// pass 1: process rows
-		let dataOff = 0;
-		let i;
-		
-		const I8 = 8;
-		const I64 = 64;
-		
-		for (i = 0; i < I8; ++i) {
-			d0 = data[dataOff];
-			d1 = data[dataOff + 1];
-			d2 = data[dataOff + 2];
-			d3 = data[dataOff + 3];
-			d4 = data[dataOff + 4];
-			d5 = data[dataOff + 5];
-			d6 = data[dataOff + 6];
-			d7 = data[dataOff + 7];
-			
-			let tmp0 = d0 + d7;
-			let tmp7 = d0 - d7;
-			let tmp1 = d1 + d6;
-			let tmp6 = d1 - d6;
-			let tmp2 = d2 + d5;
-			let tmp5 = d2 - d5;
-			let tmp3 = d3 + d4;
-			let tmp4 = d3 - d4;
-			
-			/* Even part */
-			let tmp10 = tmp0 + tmp3;
-			/* phase 2 */
-			let tmp13 = tmp0 - tmp3;
-			let tmp11 = tmp1 + tmp2;
-			let tmp12 = tmp1 - tmp2;
-			
-			data[dataOff] = tmp10 + tmp11;
-			/* phase 3 */
-			data[dataOff + 4] = tmp10 - tmp11;
-			
-			let z1 = (tmp12 + tmp13) * 0.707106781;
-			/* c4 */
-			data[dataOff + 2] = tmp13 + z1;
-			/* phase 5 */
-			data[dataOff + 6] = tmp13 - z1;
-			
-			/* Odd part */
-			tmp10 = tmp4 + tmp5;
-			/* phase 2 */
-			tmp11 = tmp5 + tmp6;
-			tmp12 = tmp6 + tmp7;
-			
-			/* The rotator is modified from fig 4-8 to avoid extra negations. */
-			let z5 = (tmp10 - tmp12) * 0.382683433;
-			/* c6 */
-			let z2 = 0.541196100 * tmp10 + z5;
-			/* c2-c6 */
-			let z4 = 1.306562965 * tmp12 + z5;
-			/* c2+c6 */
-			let z3 = tmp11 * 0.707106781;
-			/* c4 */
-			
-			let z11 = tmp7 + z3;
-			/* phase 5 */
-			let z13 = tmp7 - z3;
-			
-			data[dataOff + 5] = z13 + z2;
-			/* phase 6 */
-			data[dataOff + 3] = z13 - z2;
-			data[dataOff + 1] = z11 + z4;
-			data[dataOff + 7] = z11 - z4;
-			
-			dataOff += 8;
-			/* advance pointer to next row */
-		}
-		
-		/* Pass 2: process columns. */
-		dataOff = 0;
-		for (i = 0; i < I8; ++i) {
-			d0 = data[dataOff];
-			d1 = data[dataOff + 8];
-			d2 = data[dataOff + 16];
-			d3 = data[dataOff + 24];
-			d4 = data[dataOff + 32];
-			d5 = data[dataOff + 40];
-			d6 = data[dataOff + 48];
-			d7 = data[dataOff + 56];
-			
-			let tmp0p2 = d0 + d7;
-			let tmp7p2 = d0 - d7;
-			let tmp1p2 = d1 + d6;
-			let tmp6p2 = d1 - d6;
-			let tmp2p2 = d2 + d5;
-			let tmp5p2 = d2 - d5;
-			let tmp3p2 = d3 + d4;
-			let tmp4p2 = d3 - d4;
-			
-			/* Even part */
-			let tmp10p2 = tmp0p2 + tmp3p2;
-			/* phase 2 */
-			let tmp13p2 = tmp0p2 - tmp3p2;
-			let tmp11p2 = tmp1p2 + tmp2p2;
-			let tmp12p2 = tmp1p2 - tmp2p2;
-			
-			data[dataOff] = tmp10p2 + tmp11p2;
-			/* phase 3 */
-			data[dataOff + 32] = tmp10p2 - tmp11p2;
-			
-			let z1p2 = (tmp12p2 + tmp13p2) * 0.707106781;
-			/* c4 */
-			data[dataOff + 16] = tmp13p2 + z1p2;
-			/* phase 5 */
-			data[dataOff + 48] = tmp13p2 - z1p2;
-			
-			/* Odd part */
-			tmp10p2 = tmp4p2 + tmp5p2;
-			/* phase 2 */
-			tmp11p2 = tmp5p2 + tmp6p2;
-			tmp12p2 = tmp6p2 + tmp7p2;
-			
-			/* The rotator is modified from fig 4-8 to avoid extra negations. */
-			let z5p2 = (tmp10p2 - tmp12p2) * 0.382683433;
-			/* c6 */
-			let z2p2 = 0.541196100 * tmp10p2 + z5p2;
-			/* c2-c6 */
-			let z4p2 = 1.306562965 * tmp12p2 + z5p2;
-			/* c2+c6 */
-			let z3p2 = tmp11p2 * 0.707106781;
-			/* c4 */
-			
-			let z11p2 = tmp7p2 + z3p2;
-			/* phase 5 */
-			let z13p2 = tmp7p2 - z3p2;
-			
-			data[dataOff + 40] = z13p2 + z2p2;
-			/* phase 6 */
-			data[dataOff + 24] = z13p2 - z2p2;
-			data[dataOff + 8] = z11p2 + z4p2;
-			data[dataOff + 56] = z11p2 - z4p2;
-			
-			dataOff++;
-			/* advance pointer to next column */
-		}
-		
-		// Quantize/descale the coefficients
-		let fDCTQuantize;
-		for (i = 0; i < I64; ++i) {
-			// Apply the quantization and scaling factor & Round to nearest integer
-			fDCTQuantize = data[i] * fdtbl[i];
-			outputfDCTQuant[i] = fDCTQuantize > 0.0 ? bitOr(fDCTQuantize + 0.5, 0) : bitOr(fDCTQuantize - 0.5, 0);
-		}
-		
-		return outputfDCTQuant;
 	}
 	
 	function writeAPP0() {
@@ -417,7 +428,7 @@ export default (bitmap, quality = 100) => {
 		writeByte(0); // thumbnheight
 	}
 	
-	function writeSOF0(width, height) {
+	function writeSOF0() {
 		writeWord(JPG.SOF0);
 		writeWord(17); // length, truecolor YUV JPG
 		writeByte(8); // precision
@@ -441,11 +452,11 @@ export default (bitmap, quality = 100) => {
 		writeByte(0);
 		
 		for (let i = 0; i < 64; i++) {
-			writeByte(YTable[i]);
+			writeByte(yTable[i]);
 		}
 		writeByte(1);
 		for (let j = 0; j < 64; j++) {
-			writeByte(UVTable[j]);
+			writeByte(uvTable[j]);
 		}
 	}
 	
@@ -502,30 +513,30 @@ export default (bitmap, quality = 100) => {
 	}
 	
 	function processDU(CDU, fdtbl, DC, HTDC, HTAC) {
-		let EOB = HTAC[0x00];
-		let M16zeroes = HTAC[0xF0];
-		let pos;
-		
 		const I16 = 16;
 		const I63 = 63;
 		const I64 = 64;
 		
+		let EOB = HTAC[0x00];
+		let M16zeroes = HTAC[0xF0];
 		let DU_DCT = fDCTQuantize(CDU, fdtbl);
+		let pos;
+		
 		// ZigZag reorder
 		for (let j = 0; j < I64; ++j) {
 			DU[ZIG_ZAG[j]] = DU_DCT[j];
 		}
-		let Diff = DU[0] - DC;
+		let diff = DU[0] - DC;
 		DC = DU[0];
 		// Encode DC
-		if (Diff == 0) {
-			writeBits(HTDC[0]); // Diff might be 0
+		if (diff == 0) {
+			writeBits(HTDC[0]); // diff might be 0
 		} else {
-			pos = 32767 + Diff;
-			writeBits(HTDC[category[pos]]);
-			writeBits(bitcode[pos]);
+			pos = 32767 + diff;
+			writeBits(HTDC[CATEGORY[pos]]);
+			writeBits(BIT_CODE[pos]);
 		}
-		// Encode ACs
+		// encode ACs
 		let end0pos = 63; // was const... which is crazy
 		for (; end0pos > 0 && DU[end0pos] === 0; end0pos--) {}
 		
@@ -551,150 +562,96 @@ export default (bitmap, quality = 100) => {
 				nrZeroes = bitAnd(nrZeroes, 0xF);
 			}
 			pos = 32767 + DU[i];
-			writeBits(HTAC[bitShiftL(nrZeroes, 4) + category[pos]]);
-			writeBits(bitcode[pos]);
+			writeBits(HTAC[bitShiftL(nrZeroes, 4) + CATEGORY[pos]]);
+			writeBits(BIT_CODE[pos]);
 			i++;
 		}
 		if (end0pos != I63) {
 			writeBits(EOB);
 		}
+		
 		return DC;
 	}
 	
-	function initCharLookupTable() {
-		let sfcc = String.fromCharCode;
-		for (let i = 0; i < 256; i++) { // ACHTUNG // 255
-			clt[i] = sfcc(i);
-		}
-	}
+	// add JPEG headers
+	writeWord(JPG.SOI);
+	writeAPP0();
+	writeDQT();
+	writeSOF0();
+	writeDHT();
+	writeSOS();
 	
-	function setQuality(quality) {
-		if (quality <= 0) {
-			quality = 1;
-		}
-		if (quality > 100) {
-			quality = 100;
-		}
-		
-		if (currentQuality === quality) {
-			return;
-		} // don't recalculate if unchanged
-		
-		let sf = 0;
-		if (quality < 50) {
-			sf = Math.floor(5000 / quality);
-		} else {
-			sf = Math.floor(200 - quality * 2);
-		}
-		
-		initQuantTables(sf);
-		currentQuality = quality;
-	}
+	// Encode 8x8 macroblocks
+	let DCY = 0;
+	let DCU = 0;
+	let DCV = 0;
+	let quadWidth = width * 4;
+	let x;
+	let y = 0;
+	let r;
+	let g;
+	let b;
+	let start;
+	let p;
+	let col;
+	let row;
 	
-	// create tables
-	initCharLookupTable();
-	initHuffmanTbl();
-	initCategoryNumber();
-	initRGBYUVTable();
-	
-	setQuality(quality);
-	
-	function doEncode(bitmap) {// image data object
-		// Initialize bit writer
-		byteout = [];
-		bytenew = 0;
-		bytepos = 7;
+	while (y < height) {
+		x = 0;
 		
-		// Add JPEG headers
-		writeWord(JPG.SOI);
-		writeAPP0();
-		writeDQT();
-		writeSOF0(bitmap.width, bitmap.height);
-		writeDHT();
-		writeSOS();
-		
-		// Encode 8x8 macroblocks
-		let DCY = 0;
-		let DCU = 0;
-		let DCV = 0;
-		
-		bytenew = 0;
-		bytepos = 7;
-		
-		let imageData = bitmap.data;
-		let width = bitmap.width;
-		let height = bitmap.height;
-		let quadWidth = width * 4;
-		
-		let x;
-		let y = 0;
-		let r;
-		let g;
-		let b;
-		let start;
-		let p;
-		let col;
-		let row;
-		let pos;
-		
-		while (y < height) {
-			x = 0;
-			while (x < quadWidth) {
-				start = quadWidth * y + x;
-				p = start;
-				col = -1;
-				row = 0;
+		while (x < quadWidth) {
+			start = quadWidth * y + x;
+			p = start;
+			col = -1;
+			row = 0;
+			
+			for (let pos = 0; pos < 64; pos++) {
+				row = bitShiftR(pos, 3);// /8
+				col = bitAnd(pos, 7) * 4; // %8
+				p = start + row * quadWidth + col;
 				
-				for (pos = 0; pos < 64; pos++) {
-					row = bitShiftR(pos, 3);// /8
-					col = bitAnd(pos, 7) * 4; // %8
-					p = start + row * quadWidth + col;
-					
-					if (y + row >= height) { // padding bottom
-						p -= quadWidth * (y + 1 + row - height);
-					}
-					
-					if (x + col >= quadWidth) { // padding right
-						p -= x + col - quadWidth + 4;
-					}
-					
-					r = imageData[p++];
-					g = imageData[p++];
-					b = imageData[p++];
-					
-					/* // calculate YUV values dynamically
-					 YDU[pos]=((( 0.29900)*r+( 0.58700)*g+( 0.11400)*b))-128; //-0x80
-					 UDU[pos]=(((-0.16874)*r+(-0.33126)*g+( 0.50000)*b));
-					 VDU[pos]=((( 0.50000)*r+(-0.41869)*g+(-0.08131)*b));
-					 */
-					
-					// use lookup table (slightly faster)
-					YDU[pos] = bitShiftR(RGB_YUV_TABLE[r] + RGB_YUV_TABLE[g + 256] + RGB_YUV_TABLE[b + 512], 16) - 128;
-					UDU[pos] = bitShiftR(RGB_YUV_TABLE[r + 768] + RGB_YUV_TABLE[g + 1024] + RGB_YUV_TABLE[b + 1280], 16) - 128;
-					VDU[pos] = bitShiftR(RGB_YUV_TABLE[r + 1280] + RGB_YUV_TABLE[g + 1536] + RGB_YUV_TABLE[b + 1792], 16) - 128;
-					
+				if (y + row >= height) { // padding bottom
+					p -= quadWidth * (y + 1 + row - height);
 				}
 				
-				DCY = processDU(YDU, fdtblY, DCY, YDC_HT, YAC_HT);
-				DCU = processDU(UDU, fdtblUV, DCU, UVDC_HT, UVAC_HT);
-				DCV = processDU(VDU, fdtblUV, DCV, UVDC_HT, UVAC_HT);
-				x += 32;
+				if (x + col >= quadWidth) { // padding right
+					p -= x + col - quadWidth + 4;
+				}
+				
+				r = data[p++];
+				g = data[p++];
+				b = data[p++];
+				
+				/* // calculate YUV values dynamically
+				 YDU[pos]=((( 0.29900)*r+( 0.58700)*g+( 0.11400)*b))-128; //-0x80
+				 UDU[pos]=(((-0.16874)*r+(-0.33126)*g+( 0.50000)*b));
+				 VDU[pos]=((( 0.50000)*r+(-0.41869)*g+(-0.08131)*b));
+				 */
+				
+				// use lookup table (slightly faster)
+				YDU[pos] = bitShiftR(RGB_YUV_TABLE[r] + RGB_YUV_TABLE[g + 256] + RGB_YUV_TABLE[b + 512], 16) - 128;
+				UDU[pos] = bitShiftR(RGB_YUV_TABLE[r + 768] + RGB_YUV_TABLE[g + 1024] + RGB_YUV_TABLE[b + 1280], 16) - 128;
+				VDU[pos] = bitShiftR(RGB_YUV_TABLE[r + 1280] + RGB_YUV_TABLE[g + 1536] + RGB_YUV_TABLE[b + 1792], 16) - 128;
+				
 			}
-			y += 8;
+			
+			DCY = processDU(YDU, fdYTable, DCY, YDC_HT, YAC_HT);
+			DCU = processDU(UDU, fdUvTable, DCU, UVDC_HT, UVAC_HT);
+			DCV = processDU(VDU, fdUvTable, DCV, UVDC_HT, UVAC_HT);
+			x += 32;
 		}
-		
-		// Do the bit alignment of the EOI marker
-		if (bytepos >= 0) {
-			let fillBits = [];
-			fillBits[1] = bytepos + 1;
-			fillBits[0] = bitShiftL(1, bytepos + 1) - 1;
-			writeBits(fillBits);
-		}
-		
-		writeWord(JPG.EOI);
-		
-		return new Buffer(byteout);
+		y += 8;
 	}
 	
-	return doEncode(bitmap);
+	// Do the bit alignment of the EOI marker
+	if (bytePos >= 0) {
+		let fillBits = [];
+		fillBits[1] = bytePos + 1;
+		fillBits[0] = bitShiftL(1, bytePos + 1) - 1;
+		writeBits(fillBits);
+	}
+	
+	writeWord(JPG.EOI);
+	
+	return new Buffer(byteOut);
 };

@@ -118,9 +118,9 @@ describe("nomage", function() {
 			it("png brightness higher", testOpAndSaveGen("brightness", 0.6)(IMAGES.PNG));
 		});
 		describe("contrast lower", () => {
-			it("bmp contrast lower", testOpAndSaveGen("contrast", 0.75)(IMAGES.BMP));
-			it("jpg contrast lower", testOpAndSaveGen("contrast", 0.75)(IMAGES.JPG));
-			it("png contrast lower", testOpAndSaveGen("contrast", 0.75)(IMAGES.PNG));
+			it("bmp contrast lower", testOpAndSaveGen("contrast", -0.5)(IMAGES.BMP));
+			it("jpg contrast lower", testOpAndSaveGen("contrast", -0.5)(IMAGES.JPG));
+			it("png contrast lower", testOpAndSaveGen("contrast", -0.5)(IMAGES.PNG));
 		});
 		describe("contrast higher", () => {
 			it("bmp contrast higher", testOpAndSaveGen("contrast", 0.5)(IMAGES.BMP));
