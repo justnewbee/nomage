@@ -122,10 +122,11 @@ class Image {
 	/**
 	 * Writes the image to a local file
 	 * @param {String} savePath a path to the destination file (either PNG or JPG)
+	 * @param {Number} quality [1-100] only for JPEG
 	 * @returns {Promise}
 	 */
-	save(savePath) {
-		return bitmapEncode(this._bitmap).then(buffer => fileSave(buffer, savePath));
+	save(savePath, quality) {
+		return bitmapEncode(this._bitmap, quality).then(buffer => fileSave(buffer, savePath));
 	}
 }
 

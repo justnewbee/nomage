@@ -397,7 +397,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	return offset - startOffset;
 }
 
-function buildComponentData(frame, component) {
+function buildComponentData(component) {
 	let lines = [];
 	let blocksPerLine = component.blocksPerLine;
 	let blocksPerColumn = component.blocksPerColumn;
@@ -681,425 +681,403 @@ function parseAppADOBE(arrAppData) {
 	}
 }
 
-class JpegImage {
-	constructor(buffer) {
-		let data = new Uint8Array(buffer);
+function parseComponentData(buffer) {
+	let o = {};
+	let data = new Uint8Array(buffer);
+	
+	let offset = 0;
+	let frame;
+	let resetInterval;
+	let quantizationTables = [];
+	let frames = [];
+	let huffmanTablesAC = [];
+	let huffmanTablesDC = [];
+	let fileMarker;
+	let i;
+	let j;
+	
+	// if NOT assigned to a variable means skipping the data
+	function readUInt16() {
+		let value = getUInit16(data, offset);
 		
-		let offset = 0;
-		let frame;
-		let resetInterval;
-		let quantizationTables = [];
-		let frames = [];
-		let huffmanTablesAC = [];
-		let huffmanTablesDC = [];
-		let fileMarker;
-		let i;
-		let j;
+		offset += 2;
+		return value;
+	}
+	function readDataBlock() {
+		let arr = getDataBlock(data, offset);
 		
-		// if NOT assigned to a variable means skipping the data
-		function readUInt16() {
-			let value = getUInit16(data, offset);
+		offset += arr.length + 2;
+		
+		return arr;
+	}
+	
+	fileMarker = readUInt16();
+	
+	if (fileMarker !== JPG.SOI) {
+		throw new Error("no SOI found");
+	}
+	
+	fileMarker = readUInt16();
+	
+	while (fileMarker !== JPG.EOI) {
+		switch (fileMarker) {
+		case 0xFF00:
+			break;
+		case JPG.APP1:
+		case JPG.APP2:
+		case JPG.APP3:
+		case JPG.APP4:
+		case JPG.APP5:
+		case JPG.APP6:
+		case JPG.APP7:
+		case JPG.APP8:
+		case JPG.APP9:
+		case JPG.APP10:
+		case JPG.APP11:
+		case JPG.APP12:
+		case JPG.APP13:
+		case JPG.APP15:
+		case JPG.CMT:
+			readDataBlock(); // read and ignore TODO APP1 - Exif
+			break;
+		case JPG.APP0:
+			// JFIF is NOT used anywhere yet, however you have to read the data block
+			o.JFIF = parseAppJFIF(readDataBlock());
+			break;
+		case JPG.APP14:
+			o.ADOBE = parseAppADOBE(readDataBlock());
+			break;
+		case JPG.DQT:
+			let quantizationTablesLength = readUInt16();
+			let quantizationTablesEnd = quantizationTablesLength + offset - 2;
 			
-			offset += 2;
-			return value;
-		}
-		function readDataBlock() {
-			let arr = getDataBlock(data, offset);
-			
-			offset += arr.length + 2;
-			
-			return arr;
-		}
-		
-		fileMarker = readUInt16();
-		
-		if (fileMarker !== JPG.SOI) {
-			throw new Error("no SOI found");
-		}
-		
-		fileMarker = readUInt16();
-		
-		while (fileMarker !== JPG.EOI) {
-			switch (fileMarker) {
-			case 0xFF00:
-				break;
-			case JPG.APP1:
-			case JPG.APP2:
-			case JPG.APP3:
-			case JPG.APP4:
-			case JPG.APP5:
-			case JPG.APP6:
-			case JPG.APP7:
-			case JPG.APP8:
-			case JPG.APP9:
-			case JPG.APP10:
-			case JPG.APP11:
-			case JPG.APP12:
-			case JPG.APP13:
-			case JPG.APP15:
-			case JPG.CMT:
-				readDataBlock(); // read and ignore TODO APP1 - Exif
-				break;
-			case JPG.APP0:
-				this.JFIF = parseAppJFIF(readDataBlock());
-				break;
-			case JPG.APP14:
-				this.ADOBE = parseAppADOBE(readDataBlock());
-				break;
-			case JPG.DQT:
-				let quantizationTablesLength = readUInt16();
-				let quantizationTablesEnd = quantizationTablesLength + offset - 2;
-				
-				while (offset < quantizationTablesEnd) {
-					let quantizationTableSpec = data[offset++];
-					let tableData = new Int32Array(64);
-					if (bitShiftR(quantizationTableSpec, 4) === 0) { // 8 bit values
-						for (j = 0; j < 64; j++) {
-							tableData[dctZigZag[j]] = data[offset++];
-						}
-					} else if (bitShiftR(quantizationTableSpec, 4) === 1) { // 16 bit
-						for (j = 0; j < 64; j++) {
-							tableData[dctZigZag[j]] = readUInt16();
-						}
-					} else {
-						throw new Error("DQT: invalid table spec");
+			while (offset < quantizationTablesEnd) {
+				let quantizationTableSpec = data[offset++];
+				let tableData = new Int32Array(64);
+				if (bitShiftR(quantizationTableSpec, 4) === 0) { // 8 bit values
+					for (j = 0; j < 64; j++) {
+						tableData[dctZigZag[j]] = data[offset++];
 					}
-					quantizationTables[bitAnd(quantizationTableSpec, 15)] = tableData;
+				} else if (bitShiftR(quantizationTableSpec, 4) === 1) { // 16 bit
+					for (j = 0; j < 64; j++) {
+						tableData[dctZigZag[j]] = readUInt16();
+					}
+				} else {
+					throw new Error("DQT: invalid table spec");
 				}
-				break;
-			case JPG.SOF0:
-			case JPG.SOF1:
-			case JPG.SOF2:
-				readUInt16(); // skip data length
+				quantizationTables[bitAnd(quantizationTableSpec, 15)] = tableData;
+			}
+			break;
+		case JPG.SOF0:
+		case JPG.SOF1:
+		case JPG.SOF2:
+			readUInt16(); // skip data length
+			
+			frame = {
+				extended: fileMarker === 0xFFC1,
+				progressive: fileMarker === 0xFFC2,
+				precision: data[offset++],
+				scanLines: readUInt16(),
+				samplesPerLine: readUInt16(),
+				components: {},
+				componentsOrder: []
+			};
+			
+			let componentsCount = data[offset++];
+			let componentId;
+			
+			for (i = 0; i < componentsCount; i++) {
+				componentId = data[offset];
+				let h = bitShiftR(data[offset + 1], 4);
+				let v = bitAnd(data[offset + 1], 15);
+				let qId = data[offset + 2];
 				
-				frame = {
-					extended: fileMarker === 0xFFC1,
-					progressive: fileMarker === 0xFFC2,
-					precision: data[offset++],
-					scanLines: readUInt16(),
-					samplesPerLine: readUInt16(),
-					components: {},
-					componentsOrder: []
+				frame.componentsOrder.push(componentId);
+				frame.components[componentId] = {
+					h: h,
+					v: v,
+					quantizationIdx: qId
 				};
+				offset += 3;
+			}
+			prepareComponents(frame);
+			frames.push(frame);
+			break;
+		case JPG.DHT:
+			let huffmanLength = readUInt16();
+			for (i = 2; i < huffmanLength;) {
+				let huffmanTableSpec = data[offset++];
+				let codeLengths = new Uint8Array(16);
+				let codeLengthSum = 0;
 				
-				let componentsCount = data[offset++];
-				let componentId;
-				
-				for (i = 0; i < componentsCount; i++) {
-					componentId = data[offset];
-					let h = bitShiftR(data[offset + 1], 4);
-					let v = bitAnd(data[offset + 1], 15);
-					let qId = data[offset + 2];
-					
-					frame.componentsOrder.push(componentId);
-					frame.components[componentId] = {
-						h: h,
-						v: v,
-						quantizationIdx: qId
-					};
-					offset += 3;
-				}
-				prepareComponents(frame);
-				frames.push(frame);
-				break;
-			case JPG.DHT:
-				let huffmanLength = readUInt16();
-				for (i = 2; i < huffmanLength;) {
-					let huffmanTableSpec = data[offset++];
-					let codeLengths = new Uint8Array(16);
-					let codeLengthSum = 0;
-					for (j = 0; j < 16; j++, offset++) {
-						codeLengthSum += (codeLengths[j] = data[offset]);
-					}
-					let huffmanValues = new Uint8Array(codeLengthSum);
-					for (j = 0; j < codeLengthSum; j++, offset++) {
-						huffmanValues[j] = data[offset];
-					}
-					i += 17 + codeLengthSum;
-					
-					(bitShiftR(huffmanTableSpec, 4) === 0 ? huffmanTablesDC : huffmanTablesAC)[bitAnd(huffmanTableSpec, 15)] = buildHuffmanTable(codeLengths, huffmanValues);
-				}
-				break;
-			case JPG.DRI:
-				readUInt16();
-				
-				resetInterval = readUInt16();
-				break;
-			case JPG.SOS: // FIXME performance bottleneck here
-				readUInt16();
-				
-				let selectorsCount = data[offset++];
-				let components = [];
-				let component;
-				
-				for (i = 0; i < selectorsCount; i++) {
-					component = frame.components[data[offset++]];
-					let tableSpec = data[offset++];
-					component.huffmanTableDC = huffmanTablesDC[bitShiftR(tableSpec, 4)];
-					component.huffmanTableAC = huffmanTablesAC[bitAnd(tableSpec, 15)];
-					components.push(component);
+				for (j = 0; j < 16; j++, offset++) {
+					codeLengthSum += (codeLengths[j] = data[offset]);
 				}
 				
-				let spectralStart = data[offset++];
-				let spectralEnd = data[offset++];
-				let successiveApproximation = data[offset++];
-				let processed = decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, bitShiftR(successiveApproximation, 4), bitAnd(successiveApproximation, 15));
-				
-				offset += processed;
-				break;
-			default:
-				if (data[offset - 3] === 0xFF && data[offset - 2] >= 0xC0 && data[offset - 2] <= 0xFE) {
-					// could be incorrect encoding -- last 0xFF byte of the previous block was eaten by the encoder
-					offset -= 3;
-					break;
+				let huffmanValues = new Uint8Array(codeLengthSum);
+				for (j = 0; j < codeLengthSum; j++, offset++) {
+					huffmanValues[j] = data[offset];
 				}
+				i += 17 + codeLengthSum;
 				
-				throw new Error(`unknown JPEG marker ${fileMarker.toString(16)}`);
+				(bitShiftR(huffmanTableSpec, 4) === 0 ? huffmanTablesDC : huffmanTablesAC)[bitAnd(huffmanTableSpec, 15)] = buildHuffmanTable(codeLengths, huffmanValues);
+			}
+			break;
+		case JPG.DRI:
+			readUInt16();
+			
+			resetInterval = readUInt16();
+			break;
+		case JPG.SOS: // FIXME performance bottleneck here
+			readUInt16();
+			
+			let selectorsCount = data[offset++];
+			let components = [];
+			let component;
+			
+			for (i = 0; i < selectorsCount; i++) {
+				component = frame.components[data[offset++]];
+				let tableSpec = data[offset++];
+				component.huffmanTableDC = huffmanTablesDC[bitShiftR(tableSpec, 4)];
+				component.huffmanTableAC = huffmanTablesAC[bitAnd(tableSpec, 15)];
+				components.push(component);
 			}
 			
-			fileMarker = readUInt16();
-		}
-		
-		if (frames.length !== 1) {
-			throw new Error("only single frame JPEG is supported");
-		}
-		
-		// set each frame's components quantization table
-		for (i = 0; i < frames.length; i++) {
-			let cp = frames[i].components;
+			let spectralStart = data[offset++];
+			let spectralEnd = data[offset++];
+			let successiveApproximation = data[offset++];
+			let processed = decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, bitShiftR(successiveApproximation, 4), bitAnd(successiveApproximation, 15));
 			
-			each(cp, val => {
-				val.quantizationTable = quantizationTables[val.quantizationIdx];
-				delete val.quantizationIdx;
-			});
+			offset += processed;
+			break;
+		default:
+			if (data[offset - 3] === 0xFF && data[offset - 2] >= 0xC0 && data[offset - 2] <= 0xFE) {
+				// could be incorrect encoding -- last 0xFF byte of the previous block was eaten by the encoder
+				offset -= 3;
+				break;
+			}
+			
+			throw new Error(`unknown JPEG marker ${fileMarker.toString(16)}`);
 		}
 		
-		this.width = frame.samplesPerLine;
-		this.height = frame.scanLines;
-		this.components = frame.componentsOrder.map(val => {
+		fileMarker = readUInt16();
+	}
+	
+	if (frames.length !== 1) {
+		throw new Error("only single frame JPEG is supported");
+	}
+	
+	// set each frame's components quantization table
+	each(frames[0].components, val => {
+		val.quantizationTable = quantizationTables[val.quantizationIdx];
+		delete val.quantizationIdx;
+	});
+	
+	return {
+		width: frame.samplesPerLine,
+		height: frame.scanLines,
+		components: frame.componentsOrder.map(val => {
 			let com = frame.components[val];
 			
 			return {
-				lines: buildComponentData(frame, com),
+				lines: buildComponentData(com),
 				scaleX: com.h / frame.maxH,
 				scaleY: com.v / frame.maxV
 			};
-		});
-	}
+		})
+	};
+}
+
+function getMiddleData(componentData) {
+	let {ADOBE, components, width, height} = componentData;
+	let [component1, component2, component3, component4] = components;
+	let data = new Uint8Array(width * height * components.length);
+	let offset = 0;
+	let component1Line;
+	let component2Line;
+	let component3Line;
+	let component4Line;
+	let x;
+	let y;
+	let Y;
+	let Cb;
+	let Cr;
+	let K;
+	let C;
+	let M;
+	let Ye;
+	let R;
+	let G;
+	let B;
+	let colorTransform;
 	
-	/**
-	 * 
-	 * @param {Number} w
-	 * @param {Number} h
-	 * @return {Uint8Array}
-	 * @private
-	 */
-	_getData(w, h) {
-		let {ADOBE, components} = this;
-		let scaleX = this.width / w;
-		let scaleY = this.height / h;
-		let [component1, component2, component3, component4] = components;
-		let data = new Uint8Array(w * h * components.length);
-		let offset = 0;
-		let component1Line;
-		let component2Line;
-		let component3Line;
-		let component4Line;
-		let x;
-		let y;
-		let Y;
-		let Cb;
-		let Cr;
-		let K;
-		let C;
-		let M;
-		let Ye;
-		let R;
-		let G;
-		let B;
-		let colorTransform;
-		
-		switch (components.length) {
-		case 1:
-			for (y = 0; y < h; y++) {
-				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
-				for (x = 0; x < w; x++) {
-					Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
-					
-					data[offset++] = Y;
-				}
+	switch (components.length) {
+	case 1:
+		for (y = 0; y < height; y++) {
+			component1Line = component1.lines[bitOr(0, y * component1.scaleY)];
+			for (x = 0; x < width; x++) {
+				Y = component1Line[bitOr(0, x * component1.scaleX)];
+				data[offset++] = Y;
 			}
-			break;
-		case 2: // PDF might compress two component data in custom color space
-			for (y = 0; y < h; y++) {
-				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
-				component2Line = component2.lines[bitOr(0, y * component2.scaleY * scaleY)];
-				for (x = 0; x < w; x++) {
-					Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
-					data[offset++] = Y;
-					Y = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
-					data[offset++] = Y;
-				}
+		}
+		break;
+	case 2: // PDF might compress two component data in custom color space
+		for (y = 0; y < height; y++) {
+			component1Line = component1.lines[bitOr(0, y * component1.scaleY)];
+			component2Line = component2.lines[bitOr(0, y * component2.scaleY)];
+			for (x = 0; x < width; x++) {
+				Y = component1Line[bitOr(0, x * component1.scaleX)];
+				data[offset++] = Y;
+				Y = component2Line[bitOr(0, x * component2.scaleX)];
+				data[offset++] = Y;
 			}
-			break;
-		case 3: // the default transform for three components is true
+		}
+		break;
+	case 3:
+		colorTransform = true; // the default transform for three components is true
+		// the adobe transform marker overrides any previous setting
+		if (ADOBE && ADOBE.transformCode) {
 			colorTransform = true;
-			// the adobe transform marker overrides any previous setting
-			if (ADOBE && ADOBE.transformCode) {
-				colorTransform = true;
-			} else if (typeof this.colorTransform !== "undefined") {
-				colorTransform = !!this.colorTransform;
-			}
-			
-			for (y = 0; y < h; y++) {
-				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
-				component2Line = component2.lines[bitOr(0, y * component2.scaleY * scaleY)];
-				component3Line = component3.lines[bitOr(0, y * component3.scaleY * scaleY)];
-				for (x = 0; x < w; x++) {
-					if (!colorTransform) {
-						R = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
-						G = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
-						B = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
-					} else {
-						Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
-						Cb = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
-						Cr = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
-						
-						R = clampTo8bit(Y + 1.402 * (Cr - 128));
-						G = clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
-						B = clampTo8bit(Y + 1.772 * (Cb - 128));
-					}
-					
-					data[offset++] = R;
-					data[offset++] = G;
-					data[offset++] = B;
-				}
-			}
-			break;
-		case 4:
-			if (!ADOBE) {
-				throw new Error("unsupported color mode (4 components)");
-			}
-			// the default transform for four components is false
-			colorTransform = false;
-			// the adobe transform marker overrides any previous setting
-			if (ADOBE && ADOBE.transformCode) {
-				colorTransform = true;
-			} else if (typeof this.colorTransform !== "undefined") {
-				colorTransform = !!this.colorTransform;
-			}
-			
-			for (y = 0; y < h; y++) {
-				component1Line = component1.lines[bitOr(0, y * component1.scaleY * scaleY)];
-				component2Line = component2.lines[bitOr(0, y * component2.scaleY * scaleY)];
-				component3Line = component3.lines[bitOr(0, y * component3.scaleY * scaleY)];
-				component4Line = component4.lines[bitOr(0, y * component4.scaleY * scaleY)];
-				for (x = 0; x < w; x++) {
-					if (!colorTransform) {
-						C = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
-						M = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
-						Ye = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
-						K = component4Line[bitOr(0, x * component4.scaleX * scaleX)];
-					} else {
-						Y = component1Line[bitOr(0, x * component1.scaleX * scaleX)];
-						Cb = component2Line[bitOr(0, x * component2.scaleX * scaleX)];
-						Cr = component3Line[bitOr(0, x * component3.scaleX * scaleX)];
-						K = component4Line[bitOr(0, x * component4.scaleX * scaleX)];
-						
-						C = 255 - clampTo8bit(Y + 1.402 * (Cr - 128));
-						M = 255 - clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
-						Ye = 255 - clampTo8bit(Y + 1.772 * (Cb - 128));
-					}
-					data[offset++] = 255 - C;
-					data[offset++] = 255 - M;
-					data[offset++] = 255 - Ye;
-					data[offset++] = 255 - K;
-				}
-			}
-			break;
-		default:
-			throw new Error("unsupported color mode");
 		}
 		
-		return data;
+		for (y = 0; y < height; y++) {
+			component1Line = component1.lines[bitOr(0, y * component1.scaleY)];
+			component2Line = component2.lines[bitOr(0, y * component2.scaleY)];
+			component3Line = component3.lines[bitOr(0, y * component3.scaleY)];
+			for (x = 0; x < width; x++) {
+				if (colorTransform) {
+					Y = component1Line[bitOr(0, x * component1.scaleX)];
+					Cb = component2Line[bitOr(0, x * component2.scaleX)];
+					Cr = component3Line[bitOr(0, x * component3.scaleX)];
+					
+					R = clampTo8bit(Y + 1.402 * (Cr - 128));
+					G = clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
+					B = clampTo8bit(Y + 1.772 * (Cb - 128));
+				} else {
+					R = component1Line[bitOr(0, x * component1.scaleX)];
+					G = component2Line[bitOr(0, x * component2.scaleX)];
+					B = component3Line[bitOr(0, x * component3.scaleX)];
+				}
+				
+				data[offset++] = R;
+				data[offset++] = G;
+				data[offset++] = B;
+			}
+		}
+		break;
+	case 4:
+		if (!ADOBE) {
+			throw new Error("unsupported color mode (4 components)");
+		}
+		colorTransform = false; // the default transform for four components is false
+		// the adobe transform marker overrides any previous setting
+		if (ADOBE && ADOBE.transformCode) {
+			colorTransform = true;
+		}
+		
+		for (y = 0; y < height; y++) {
+			component1Line = component1.lines[bitOr(0, y * component1.scaleY)];
+			component2Line = component2.lines[bitOr(0, y * component2.scaleY)];
+			component3Line = component3.lines[bitOr(0, y * component3.scaleY)];
+			component4Line = component4.lines[bitOr(0, y * component4.scaleY)];
+			for (x = 0; x < width; x++) {
+				if (colorTransform) {
+					Y = component1Line[bitOr(0, x * component1.scaleX)];
+					Cb = component2Line[bitOr(0, x * component2.scaleX)];
+					Cr = component3Line[bitOr(0, x * component3.scaleX)];
+					K = component4Line[bitOr(0, x * component4.scaleX)];
+					
+					C = 255 - clampTo8bit(Y + 1.402 * (Cr - 128));
+					M = 255 - clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
+					Ye = 255 - clampTo8bit(Y + 1.772 * (Cb - 128));
+				} else {
+					C = component1Line[bitOr(0, x * component1.scaleX)];
+					M = component2Line[bitOr(0, x * component2.scaleX)];
+					Ye = component3Line[bitOr(0, x * component3.scaleX)];
+					K = component4Line[bitOr(0, x * component4.scaleX)];
+				}
+				data[offset++] = 255 - C;
+				data[offset++] = 255 - M;
+				data[offset++] = 255 - Ye;
+				data[offset++] = 255 - K;
+			}
+		}
+		break;
+	default:
+		throw new Error("unsupported color mode");
 	}
 	
-	getData() {
-		let {components, width, height} = this;
-		let imageDataArray = new Buffer(width * height * 4);
-		let data = this._getData(width, height);
-		let i = 0;
-		let j = 0;
-		let x;
-		let y;
-		let Y;
-		let K;
-		let C;
-		let M;
-		let R;
-		let G;
-		let B;
-		
-		switch (components.length) {
-		case 1:
-			for (y = 0; y < height; y++) {
-				for (x = 0; x < width; x++) {
-					Y = data[i++];
-					
-					imageDataArray[j++] = Y;
-					imageDataArray[j++] = Y;
-					imageDataArray[j++] = Y;
-					imageDataArray[j++] = 255;
-				}
-			}
-			break;
-		case 3:
-			for (y = 0; y < height; y++) {
-				for (x = 0; x < width; x++) {
-					R = data[i++];
-					G = data[i++];
-					B = data[i++];
-					
-					imageDataArray[j++] = R;
-					imageDataArray[j++] = G;
-					imageDataArray[j++] = B;
-					imageDataArray[j++] = 255;
-				}
-			}
-			break;
-		case 4:
-			for (y = 0; y < height; y++) {
-				for (x = 0; x < width; x++) {
-					C = data[i++];
-					M = data[i++];
-					Y = data[i++];
-					K = data[i++];
-					
-					R = 255 - clampTo8bit(C * (1 - K / 255) + K);
-					G = 255 - clampTo8bit(M * (1 - K / 255) + K);
-					B = 255 - clampTo8bit(Y * (1 - K / 255) + K);
-					
-					imageDataArray[j++] = R;
-					imageDataArray[j++] = G;
-					imageDataArray[j++] = B;
-					imageDataArray[j++] = 255;
-				}
-			}
-			break;
-		default:
-			throw new Error("Unsupported color mode");
-		}
-		
-		return imageDataArray;
-	}
+	return data;
 }
 
 export default buffer => {
-	let decoder = new JpegImage(buffer);
+	let componentData = parseComponentData(buffer);
+	let {components, width, height} = componentData;
+	let data = new Buffer(width * height * 4);
+	let middleData = getMiddleData(componentData);
+	let i = 0;
+	let j = 0;
+	let x;
+	let y;
+	let Y;
+	let K;
+	let C;
+	let M;
+	let R;
+	let G;
+	let B;
+	
+	switch (components.length) {
+	case 1:
+		for (y = 0; y < height; y++) {
+			for (x = 0; x < width; x++) {
+				Y = middleData[i++];
+				
+				data[j++] = Y;
+				data[j++] = Y;
+				data[j++] = Y;
+				data[j++] = 255;
+			}
+		}
+		break;
+	case 3:
+		for (y = 0; y < height; y++) {
+			for (x = 0; x < width; x++) {
+				R = middleData[i++];
+				G = middleData[i++];
+				B = middleData[i++];
+				
+				data[j++] = R;
+				data[j++] = G;
+				data[j++] = B;
+				data[j++] = 255;
+			}
+		}
+		break;
+	case 4:
+		for (y = 0; y < height; y++) {
+			for (x = 0; x < width; x++) {
+				C = middleData[i++];
+				M = middleData[i++];
+				Y = middleData[i++];
+				K = middleData[i++];
+				
+				R = 255 - clampTo8bit(C * (1 - K / 255) + K);
+				G = 255 - clampTo8bit(M * (1 - K / 255) + K);
+				B = 255 - clampTo8bit(Y * (1 - K / 255) + K);
+				
+				data[j++] = R;
+				data[j++] = G;
+				data[j++] = B;
+				data[j++] = 255;
+			}
+		}
+		break;
+	default:
+		throw new Error("Unsupported color mode");
+	}
 	
 	return {
-		width: decoder.width,
-		height: decoder.height,
-		data: decoder.getData()
+		data, width, height
 	};
 };

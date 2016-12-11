@@ -46,8 +46,6 @@ describe("nomage", function() {
 				img.mime.should.equal(what.MIME);
 				Buffer.isBuffer(img.data).should.equal(true);
 				img.data.length.should.equal(img.width * img.height * 4);
-				
-				return img.save(what.PATH_SAVE);
 			}).should.be.fulfilled();
 		}
 		
@@ -60,6 +58,21 @@ describe("nomage", function() {
 			it("bmp-remote", () => test(IMAGES.BMP_REMOTE));
 			it("jpg-remote", () => test(IMAGES.JPG_REMOTE));
 			it("png-remote", () => test(IMAGES.PNG_REMOTE));
+		});
+	});
+	
+	describe("save", function() {
+		function test(what) {
+			return nomage(what.PATH).then(img => img.save(what.PATH_SAVE)).should.be.fulfilled();
+		}
+		
+		describe("save", () => {
+			it("bmp", () => test(IMAGES.BMP));
+			it("jpg", () => test(IMAGES.JPG));
+			it("png", () => test(IMAGES.PNG));
+			
+			it("jpg save q50", () => nomage(IMAGES.JPG.PATH).then(img => img.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "q50"), 50)).should.be.fulfilled());
+			it("jpg save q25", () => nomage(IMAGES.JPG.PATH).then(img => img.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "q25"), 25)).should.be.fulfilled());
 		});
 	});
 	
