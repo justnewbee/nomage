@@ -84,7 +84,7 @@ const STD_AC_CHROMINANCE_VALUES = [
 	0xf9, 0xfa
 ];
 
-function JPEGEncoder(quality) {
+export default (bitmap, quality = 100) => {
 	let YTable = new Array(64);
 	let UVTable = new Array(64);
 	let fdtblY = new Array(64);
@@ -568,11 +568,38 @@ function JPEGEncoder(quality) {
 		}
 	}
 	
-	this.encode = function(image, quality) {// image data object
-		if (quality) {
-			setQuality(quality);
+	function setQuality(quality) {
+		if (quality <= 0) {
+			quality = 1;
+		}
+		if (quality > 100) {
+			quality = 100;
 		}
 		
+		if (currentQuality === quality) {
+			return;
+		} // don't recalculate if unchanged
+		
+		let sf = 0;
+		if (quality < 50) {
+			sf = Math.floor(5000 / quality);
+		} else {
+			sf = Math.floor(200 - quality * 2);
+		}
+		
+		initQuantTables(sf);
+		currentQuality = quality;
+	}
+	
+	// create tables
+	initCharLookupTable();
+	initHuffmanTbl();
+	initCategoryNumber();
+	initRGBYUVTable();
+	
+	setQuality(quality);
+	
+	function doEncode(bitmap) {// image data object
 		// Initialize bit writer
 		byteout = [];
 		bytenew = 0;
@@ -582,7 +609,7 @@ function JPEGEncoder(quality) {
 		writeWord(JPG.SOI);
 		writeAPP0();
 		writeDQT();
-		writeSOF0(image.width, image.height);
+		writeSOF0(bitmap.width, bitmap.height);
 		writeDHT();
 		writeSOS();
 		
@@ -594,11 +621,9 @@ function JPEGEncoder(quality) {
 		bytenew = 0;
 		bytepos = 7;
 		
-		this.encode.displayName = "_encode_";
-		
-		let imageData = image.data;
-		let width = image.width;
-		let height = image.height;
+		let imageData = bitmap.data;
+		let width = bitmap.width;
+		let height = bitmap.height;
 		let quadWidth = width * 4;
 		
 		let x;
@@ -669,48 +694,7 @@ function JPEGEncoder(quality) {
 		writeWord(JPG.EOI);
 		
 		return new Buffer(byteout);
-	};
-	
-	function setQuality(quality) {
-		if (quality <= 0) {
-			quality = 1;
-		}
-		if (quality > 100) {
-			quality = 100;
-		}
-		
-		if (currentQuality == quality) {
-			return;
-		} // don't recalculate if unchanged
-		
-		let sf = 0;
-		if (quality < 50) {
-			sf = Math.floor(5000 / quality);
-		} else {
-			sf = Math.floor(200 - quality * 2);
-		}
-		
-		initQuantTables(sf);
-		currentQuality = quality;
 	}
 	
-	function init() {
-		if (!quality) {
-			quality = 50;
-		}
-		// create tables
-		initCharLookupTable();
-		initHuffmanTbl();
-		initCategoryNumber();
-		initRGBYUVTable();
-		
-		setQuality(quality);
-	}
-	
-	init();
-}
-
-export default (imgData, quality = 100) => {
-	let encoder = new JPEGEncoder(quality);
-	return encoder.encode(imgData, quality);
+	return doEncode(bitmap);
 };
