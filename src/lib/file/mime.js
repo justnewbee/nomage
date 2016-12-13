@@ -40,53 +40,55 @@ function extToMime(ext = "") {
 	return "";
 }
 
-/**
- * get supported image mime type string from file path or buffer by
- * checking the [magic number](http://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files) of the buffer
- * @param {String|Buffer} file file path or file buffer
- * @param {Boolean} lookDeeper by default file ext is used to determine image mime, however, when the image comes with no ext,
- *   or cannot determine whether it is an image, we still will look into the buffer
- * @return {String}
- * @throws {Error} when filePath refers to a file that cannot be read or does NOT exist - from readChunk
- */
-function determineMime(file, lookDeeper) {
-	let mime;
+export default {
+	BMP, JPG, PNG,
+	/**
+	 * determine supported image mime type string from file path or buffer by
+	 * checking the [magic number](http://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files) of the buffer
+	 * @param {String|Buffer} file file path or file buffer
+	 * @param {Boolean} lookDeeper by default file ext is used to determine image mime, however, when the image comes with no ext,
+	 *   or cannot determine whether it is an image, we still will look into the buffer
+	 * @return {String}
+	 * @throws {Error} when filePath refers to a file that cannot be read or does NOT exist - from readChunk
+	 */
+	determine(file, lookDeeper) {
+		let mime;
+		
+		if (typeof file === "string" && !lookDeeper) {
+			mime = extToMime(getExt(file));
+		}
+		
+		if (mime) {
+			return mime;
+		}
+		
+		const buffer = typeof file === "string" ? readChunk(file) : file;
+		
+		if (!Buffer.isBuffer(buffer)) {
+			throw new Error("should provide a file buffer or path");
+		}
+		
+		if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+			return JPG;
+		}
+		
+		if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+			return PNG;
+		}
+		
+		if (buffer[0] === 0x42 && buffer[1] === 0x4D) {
+			return BMP;
+		}
+		
+		return "";
+	},
 	
-	if (typeof file === "string" && !lookDeeper) {
-		mime = extToMime(getExt(file));
+	/**
+	 * get ext string regarding the mime type
+	 * @param {String} mime
+	 * @return {String}
+	 */
+	mimeToExt(mime) {
+		return (MIME_MAP[mime] || [""])[0];
 	}
-	
-	if (mime) {
-		return mime;
-	}
-	
-	const buffer = typeof file === "string" ? readChunk(file) : file;
-	
-	if (!Buffer.isBuffer(buffer)) {
-		throw new Error("should provide a file buffer or path");
-	}
-	
-	if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
-		return JPG;
-	}
-	
-	if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
-		return PNG;
-	}
-	
-	if (buffer[0] === 0x42 && buffer[1] === 0x4D) {
-		return BMP;
-	}
-	
-	return "";
-}
-/**
- * get ext string regarding the mime type
- * @param {String} mime
- * @return {String}
- */
-determineMime.mimeToExt = function(mime) {
-	return (MIME_MAP[mime] || [""])[0];
 };
-
-export default determineMime;

@@ -6,7 +6,6 @@ const requestFile = request.defaults({
 	encoding: null
 });
 
-import {MIME} from "../const";
 import fileMime from "../file/mime";
 
 import bmpDecode from "./bmp/decode";
@@ -46,17 +45,17 @@ export default file => new Promise((resolve, reject) => {
 		});
 	}
 }).then(buffer => {
-	let mime = fileMime(buffer);
+	const mime = fileMime.determine(buffer);
 	let bitMap;
 	
 	switch (mime) {
-	case MIME.BMP:
+	case fileMime.BMP:
 		bitMap = bmpDecode(buffer);
 		break;
-	case MIME.JPG:
+	case fileMime.JPG:
 		bitMap = jpgDecode(buffer);
 		break;
-	case MIME.PNG:
+	case fileMime.PNG:
 		bitMap = pngDecode(buffer);
 		break;
 	default:
