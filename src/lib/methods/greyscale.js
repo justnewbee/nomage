@@ -6,10 +6,10 @@
  * @param {Integer} [y2]
  */
 export default function(x1, y1, x2, y2) {
-	let {data} = this;
+	const {data} = this;
 	
 	return this._scan(idx => {
-		let grey = parseInt(0.2126 * data[idx] + 0.7152 * data[idx + 1] + 0.0722 * data[idx + 2], 10);
+		const grey = parseInt(0.2126 * data[idx] + 0.7152 * data[idx + 1] + 0.0722 * data[idx + 2], 10);
 		
 		data[idx] = grey;
 		data[idx + 1] = grey;

@@ -7,7 +7,7 @@
  * @param {Integer} [y2]
  */
 export default function(x1, y1, x2, y2) {
-	let {data} = this;
+	const {data} = this;
 	
 	return this._scan(idx => {
 		data[idx + 3] = 255;

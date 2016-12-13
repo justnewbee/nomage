@@ -9,22 +9,20 @@ export default function(srcImage, x = 1, y = 1) {
 	x = Math.round(x);
 	y = Math.round(y);
 	
-	let {data} = this;
-	let srcData = srcImage.data;
+	const {data} = this;
+	const srcData = srcImage.data;
 	
 	srcImage._scan((idx, sx, sy) => {
-		let dstIdx = this._getPixelIndex(x + sx, y + sy);
-		
-		let bgR = data[dstIdx + 0] / 255;
-		let bgG = data[dstIdx + 1] / 255;
-		let bgB = data[dstIdx + 2] / 255;
-		let bgA = data[dstIdx + 3] / 255;
-		let fgR = srcData[idx + 0] / 255;
-		let fgG = srcData[idx + 1] / 255;
-		let fgB = srcData[idx + 2] / 255;
-		let fgA = srcData[idx + 3] / 255;
-		
-		let a = bgA + fgA - bgA * fgA;
+		const dstIdx = this._getPixelIndex(x + sx, y + sy);
+		const bgR = data[dstIdx + 0] / 255;
+		const bgG = data[dstIdx + 1] / 255;
+		const bgB = data[dstIdx + 2] / 255;
+		const bgA = data[dstIdx + 3] / 255;
+		const fgR = srcData[idx + 0] / 255;
+		const fgG = srcData[idx + 1] / 255;
+		const fgB = srcData[idx + 2] / 255;
+		const fgA = srcData[idx + 3] / 255;
+		const a = bgA + fgA - bgA * fgA;
 		
 		data[dstIdx] = (fgR * fgA + bgR * bgA * (1 - fgA)) / a * 255;
 		data[dstIdx + 1] = (fgG * fgA + bgG * bgA * (1 - fgA)) / a * 255;

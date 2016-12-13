@@ -10,14 +10,14 @@ import tinyColor from "tinycolor2";
  * @param {Integer} [y2]
  */
 export default function(amount = 0, x1, y1, x2, y2) {
-	let {data} = this;
+	const {data} = this;
 	
 	if (amount % 360 === 0) {
 		return this;
 	}
 	
 	return this._scan(idx => {
-		let {r, g, b} = tinyColor({
+		const {r, g, b} = tinyColor({
 			r: data[idx],
 			g: data[idx + 1],
 			b: data[idx + 2]

@@ -5,18 +5,18 @@ const BIN_1_6 = 63; // 111111 in binary
 
 function bit1(data, buffer, header) {
 	const {width, height, palette} = header;
+	const len = Math.ceil(width / 8);
+	const mode = len % 4;
 	let {offset} = header;
-	let len = Math.ceil(width / 8);
-	let mode = len % 4;
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < len; x++) {
-			let b = buffer.readUInt8(offset++);
-			let location = y * width * 4 + x * 32;
+			const b = buffer.readUInt8(offset++);
+			const location = y * width * 4 + x * 32;
 			
 			for (let i = 0; i < 8; i++) {
 				if (x * 8 + i < width) {
-					let rgb = palette[b >> (7 - i) & 0x1];
+					const rgb = palette[b >> (7 - i) & 0x1];
 					
 					data[location + i * 4] = rgb.blue;
 					data[location + i * 4 + 1] = rgb.green;
@@ -36,16 +36,16 @@ function bit1(data, buffer, header) {
 
 function bit4(data, buffer, header) {
 	const {width, height, palette} = header;
+	const len = Math.ceil(width / 2);
+	const mode = len % 4;
 	let {offset} = header;
-	let len = Math.ceil(width / 2);
-	let mode = len % 4;
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < len; x++) {
-			let b = buffer.readUInt8(offset++);
-			let location = y * width * 4 + x * 2 * 4;
-			let before = b >> 4;
-			let after = b & 0x0F;
+			const b = buffer.readUInt8(offset++);
+			const location = y * width * 4 + x * 2 * 4;
+			const before = b >> 4;
+			const after = b & 0x0F;
 			let rgb = palette[before];
 			
 			data[location] = rgb.blue;
@@ -72,16 +72,16 @@ function bit4(data, buffer, header) {
 
 function bit8(data, buffer, header) {
 	const {width, height, palette} = header;
+	const mode = width % 4;
 	let {offset} = header;
-	let mode = width % 4;
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < width; x++) {
-			let b = buffer.readUInt8(offset++);
-			let location = y * width * 4 + x * 4;
+			const b = buffer.readUInt8(offset++);
+			const location = y * width * 4 + x * 4;
 			
 			if (b < palette.length) {
-				let rgb = palette[b];
+				const rgb = palette[b];
 				
 				data[location] = rgb.blue;
 				data[location + 1] = rgb.green;
@@ -102,20 +102,20 @@ function bit8(data, buffer, header) {
 
 function bit15(data, buffer, header) {
 	const {width, height} = header;
+	const difW = width % 3;
 	let {offset} = header;
-	let difW = width % 3;
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < width; x++) {
-			let B = buffer.readUInt16LE(offset);
+			const B = buffer.readUInt16LE(offset);
 			
 			offset += 2;
 			
-			let blue = (B & BIN_1_5) / BIN_1_5 * 255 | 0;
-			let green = (B >> 5 & BIN_1_5 ) / BIN_1_5 * 255 | 0;
-			let red = (B >> 10 & BIN_1_5) / BIN_1_5 * 255 | 0;
-			let alpha = B >> 15 ? 0xFF : 0x00;
-			let location = y * width * 4 + x * 4;
+			const blue = (B & BIN_1_5) / BIN_1_5 * 255 | 0;
+			const green = (B >> 5 & BIN_1_5 ) / BIN_1_5 * 255 | 0;
+			const red = (B >> 10 & BIN_1_5) / BIN_1_5 * 255 | 0;
+			const alpha = B >> 15 ? 0xFF : 0x00;
+			const location = y * width * 4 + x * 4;
 			
 			data[location] = red;
 			data[location + 1] = green;
@@ -129,20 +129,20 @@ function bit15(data, buffer, header) {
 
 function bit16(data, buffer, header) {
 	const {width, height} = header;
+	const difW = width % 3;
 	let {offset} = header;
-	let difW = width % 3;
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < width; x++) {
-			let B = buffer.readUInt16LE(offset);
+			const B = buffer.readUInt16LE(offset);
 			
 			offset += 2;
 			
-			let alpha = 0xFF;
-			let blue = (B & BIN_1_5) / BIN_1_5 * 255 | 0;
-			let green = (B >> 5 & BIN_1_6 ) / BIN_1_6 * 255 | 0;
-			let red = (B >> 11) / BIN_1_5 * 255 | 0;
-			let location = y * width * 4 + x * 4;
+			const alpha = 0xFF;
+			const blue = (B & BIN_1_5) / BIN_1_5 * 255 | 0;
+			const green = (B >> 5 & BIN_1_6 ) / BIN_1_6 * 255 | 0;
+			const red = (B >> 11) / BIN_1_5 * 255 | 0;
+			const location = y * width * 4 + x * 4;
 			
 			data[location] = red;
 			data[location + 1] = green;
@@ -160,10 +160,10 @@ function bit24(data, buffer, header) {
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < width; x++) {
-			let blue = buffer.readUInt8(offset++);
-			let green = buffer.readUInt8(offset++);
-			let red = buffer.readUInt8(offset++);
-			let location = y * width * 4 + x * 4;
+			const blue = buffer.readUInt8(offset++);
+			const green = buffer.readUInt8(offset++);
+			const red = buffer.readUInt8(offset++);
+			const location = y * width * 4 + x * 4;
 			
 			data[location] = red;
 			data[location + 1] = green;
@@ -181,11 +181,11 @@ function bit32(data, buffer, header) {
 	
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < width; x++) {
-			let blue = buffer.readUInt8(offset++);
-			let green = buffer.readUInt8(offset++);
-			let red = buffer.readUInt8(offset++);
-			let alpha = buffer.readUInt8(offset++);
-			let location = y * width * 4 + x * 4;
+			const blue = buffer.readUInt8(offset++);
+			const green = buffer.readUInt8(offset++);
+			const red = buffer.readUInt8(offset++);
+			const alpha = buffer.readUInt8(offset++);
+			const location = y * width * 4 + x * 4;
 			
 			data[location] = red;
 			data[location + 1] = green;
@@ -205,7 +205,7 @@ function bit32(data, buffer, header) {
  */
 function parseHeader(buffer, withAlpha) {
 	let bitPP = buffer.readUInt16LE(28); // 30 - 31
-	let colors = buffer.readUInt32LE(48); // 48 - 51
+	const colors = buffer.readUInt32LE(48); // 48 - 51
 	let palette;
 	
 	if (bitPP === 16 && withAlpha) {
@@ -214,7 +214,7 @@ function parseHeader(buffer, withAlpha) {
 	if (bitPP < 15) {
 		palette = new Array(len);
 		
-		let len = colors === 0 ? 1 << bitPP : colors;
+		const len = colors === 0 ? 1 << bitPP : colors;
 		
 		for (let i = 0; i < len; i++) {
 			palette[i] = {

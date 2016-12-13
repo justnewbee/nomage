@@ -180,16 +180,16 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function decodeBaseline(component, zz) {
-		let t = decodeHuffman(component.huffmanTableDC);
-		let diff = t === 0 ? 0 : receiveAndExtend(t);
+		const t = decodeHuffman(component.huffmanTableDC);
+		const diff = t === 0 ? 0 : receiveAndExtend(t);
 		
-		zz[0] = (component.pred += diff);
+		zz[0] = component.pred += diff;
 		
 		k = 1;
 		while (k < 64) {
-			let rs = decodeHuffman(component.huffmanTableAC);
-			let s = bitAnd(rs, 15);
-			let r = bitShiftR(rs, 4);
+			const rs = decodeHuffman(component.huffmanTableAC);
+			const s = bitAnd(rs, 15);
+			const r = bitShiftR(rs, 4);
 			
 			if (s === 0) {
 				if (r < 15) {
@@ -206,10 +206,10 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function decodeDCFirst(component, zz) {
-		let t = decodeHuffman(component.huffmanTableDC);
-		let diff = t === 0 ? 0 : bitShiftL(receiveAndExtend(t), successive);
+		const t = decodeHuffman(component.huffmanTableDC);
+		const diff = t === 0 ? 0 : bitShiftL(receiveAndExtend(t), successive);
 		
-		zz[0] = (component.pred += diff);
+		zz[0] = component.pred += diff;
 	}
 	
 	function decodeDCSuccessive(component, zz) {
@@ -223,12 +223,12 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 		}
 		k = spectralStart;
 		
-		let e = spectralEnd;
+		const e = spectralEnd;
 		
 		while (k <= e) {
-			let rs = decodeHuffman(component.huffmanTableAC);
-			let s = bitAnd(rs, 15);
-			let r = bitShiftR(rs, 4);
+			const rs = decodeHuffman(component.huffmanTableAC);
+			const s = bitAnd(rs, 15);
+			const r = bitShiftR(rs, 4);
 			
 			if (s === 0) {
 				if (r < 15) {
@@ -248,15 +248,16 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	
 	function decodeACSuccessive(component, zz) {
 		k = spectralStart;
-		let e = spectralEnd;
+		const e = spectralEnd;
 		
 		while (k <= e) {
 			let z = dctZigZag[k];
 			
 			switch (successiveACState) {
 			case 0: // initial state
-				let rs = decodeHuffman(component.huffmanTableAC);
-				let s = bitAnd(rs, 15);
+				const rs = decodeHuffman(component.huffmanTableAC);
+				const s = bitAnd(rs, 15);
+				
 				let r = bitShiftR(rs, 4);
 				
 				if (s === 0) {
@@ -312,17 +313,17 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function decodeMcu(component, decode, mcu, row, col) {
-		let mcuRow = bitOr(mcu / mcusPerLine, 0);
-		let mcuCol = mcu % mcusPerLine;
-		let blockRow = mcuRow * component.v + row;
-		let blockCol = mcuCol * component.h + col;
+		const mcuRow = bitOr(mcu / mcusPerLine, 0);
+		const mcuCol = mcu % mcusPerLine;
+		const blockRow = mcuRow * component.v + row;
+		const blockCol = mcuCol * component.h + col;
 		
 		decode(component, component.blocks[blockRow][blockCol]);
 	}
 	
 	function decodeBlock(component, decode, mcu) {
-		let blockRow = bitOr(mcu / component.blocksPerLine, 0);
-		let blockCol = mcu % component.blocksPerLine;
+		const blockRow = bitOr(mcu / component.blocksPerLine, 0);
+		const blockCol = mcu % component.blocksPerLine;
 		
 		decode(component, component.blocks[blockRow][blockCol]);
 	}
@@ -398,12 +399,12 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 }
 
 function buildComponentData(component) {
-	let lines = [];
-	let blocksPerLine = component.blocksPerLine;
-	let blocksPerColumn = component.blocksPerColumn;
-	let samplesPerLine = bitShiftL(blocksPerLine, 3);
-	let R = new Int32Array(64);
-	let r = new Uint8Array(64);
+	const lines = [];
+	const blocksPerLine = component.blocksPerLine;
+	const blocksPerColumn = component.blocksPerColumn;
+	const samplesPerLine = bitShiftL(blocksPerLine, 3);
+	const R = new Int32Array(64);
+	const r = new Uint8Array(64);
 	let i;
 	let j;
 	
@@ -413,8 +414,9 @@ function buildComponentData(component) {
 	//   IEEE Intl. Conf. on Acoustics, Speech & Signal Processing, 1989,
 	//   988-991.
 	function quantizeAndInverse(zz, dataOut, dataIn) {
-		let qt = component.quantizationTable;
-		let p = dataIn;
+		const qt = component.quantizationTable;
+		const p = dataIn;
+		
 		let v0;
 		let v1;
 		let v2;

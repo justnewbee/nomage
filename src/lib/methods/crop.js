@@ -22,6 +22,7 @@ export default function(x1, y1, x2, y2) {
 	const w = x2 - x1 + 1;
 	const h = y2 - y1 + 1;
 	const buffer = new Buffer(w * h * 4);
+	
 	let offset = 0;
 	
 	this._scan(idx => {

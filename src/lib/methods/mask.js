@@ -9,12 +9,12 @@ export default function(srcImg, x, y) {
 	x = Math.round(x);
 	y = Math.round(y);
 	
-	let {data} = this;
-	let srcData = srcImg.data;
+	const {data} = this;
+	const srcData = srcImg.data;
 	
 	srcImg._scan((idx, sx, sy) => {
-		let dstIdx = this._getPixelIndex(x + sx, y + sy);
-		let avg = (srcData[idx + 0] + srcData[idx + 1] + srcData[idx + 2]) / 3;
+		const dstIdx = this._getPixelIndex(x + sx, y + sy);
+		const avg = (srcData[idx + 0] + srcData[idx + 1] + srcData[idx + 2]) / 3;
 		
 		data[dstIdx + 3] *= avg / 255;
 	});

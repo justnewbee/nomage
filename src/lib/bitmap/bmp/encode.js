@@ -39,7 +39,7 @@ export default bitmap => {
 			i++;
 		}
 		if (extraBytes > 0) {
-			let fillOffset = 54 + y * rowBytes + width * 3;
+			const fillOffset = 54 + y * rowBytes + width * 3;
 			buffer.fill(0, fillOffset, fillOffset + extraBytes);
 		}
 	}

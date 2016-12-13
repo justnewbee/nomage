@@ -264,7 +264,7 @@ function resizeHeightInterpolated(buffer, sizing) {
  * @param {Number|String} [toHeight] if not provided it will be the same ratio as width
  */
 export default function(toWidth, toHeight) {
-	let {width, height, _bitmap: bitmap} = this;
+	const {width, height, _bitmap: bitmap} = this;
 	
 	if (/\d+(\.\d+)?%/.test(toWidth)) {
 		toWidth = Math.round(parseFloat(toWidth) * width / 100);
@@ -286,17 +286,17 @@ export default function(toWidth, toHeight) {
 		return this;
 	}
 	
-	let widthRatio = width / toWidth;
-	let heightRatio = height / toHeight;
+	const widthRatio = width / toWidth;
+	const heightRatio = height / toHeight;
 	
 	if (widthRatio === 1 && heightRatio === 1) {
 		return this;
 	}
 	
-	let sizing = {
+	const sizing = {
 		width,
-		toWidth,
 		height,
+		toWidth,
 		toHeight,
 		// the value belows will be used repeatedly to save time
 		widthRatio,

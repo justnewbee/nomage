@@ -11,14 +11,14 @@ import {getRGB} from "../util";
  * @param {Integer} [y2]
  */
 export default function(color, percentage = 50, x1, y1, x2, y2) {
-	let {data} = this;
-	let [r2, g2, b2] = getRGB(color);
-	let p = percentage / 100;
+	const {data} = this;
+	const [r2, g2, b2] = getRGB(color);
+	const p = percentage / 100;
 	
 	return this._scan(idx => {
-		let r = data[idx];
-		let g = data[idx + 1];
-		let b = data[idx + 2];
+		const r = data[idx];
+		const g = data[idx + 1];
+		const b = data[idx + 2];
 		
 		data[idx] = (r2 - r) * p + r;
 		data[idx + 1] = (g2 - g) * p + g;

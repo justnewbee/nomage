@@ -48,17 +48,18 @@ export default function(r) {
 	}
 	
 	const {data, width, height} = this;
-	let wm = width - 1;
-	let hm = height - 1;
-	let rad1 = r + 1;
-	let mulSum = BLUR_MUL_TABLE[r];
-	let shgSum = BLUR_SHG_TABLE[r];
-	let red = [];
-	let green = [];
-	let blue = [];
-	let alpha = [];
-	let vmin = [];
-	let vmax = [];
+	const wm = width - 1;
+	const hm = height - 1;
+	const rad1 = r + 1;
+	const mulSum = BLUR_MUL_TABLE[r];
+	const shgSum = BLUR_SHG_TABLE[r];
+	const red = [];
+	const green = [];
+	const blue = [];
+	const alpha = [];
+	const vmin = [];
+	const vmax = [];
+	
 	let sumR;
 	let sumG;
 	let sumB;

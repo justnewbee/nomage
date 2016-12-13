@@ -11,7 +11,7 @@ export default function(amount = 2, x1, y1, x2, y2) {
 		amount = 2;
 	}
 	
-	let {data} = this;
+	const {data} = this;
 	
 	return this._scan(idx => {
 		data[idx] = Math.floor(data[idx] / 255 * (amount - 1)) / (amount - 1) * 255;
