@@ -14,8 +14,8 @@ export default function(r) {
 		throw new Error("r must be greater than 1");
 	}
 	
-	let {width, height, data} = this;
-	let rs = Math.ceil(r * 2.57); // significant radius
+	const {width, height, data} = this;
+	const rs = Math.ceil(r * 2.57); // significant radius
 	
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
@@ -24,14 +24,16 @@ export default function(r) {
 			let blue = 0;
 			let alpha = 0;
 			let wsum = 0;
+			let idx;
 			
 			for (let iy = y - rs; iy < y + rs + 1; iy++) {
 				for (let ix = x - rs; ix < x + rs + 1; ix++) {
-					let x1 = Math.min(width - 1, Math.max(0, ix));
-					let y1 = Math.min(height - 1, Math.max(0, iy));
-					let dsq = (ix - x) * (ix - x) + (iy - y) * (iy - y);
-					let wght = Math.exp(-dsq / (2 * r * r)) / (Math.PI * 2 * r * r);
-					let idx = bitShiftL(y1 * width + x1, 2);
+					const x1 = Math.min(width - 1, Math.max(0, ix));
+					const y1 = Math.min(height - 1, Math.max(0, iy));
+					const dsq = (ix - x) * (ix - x) + (iy - y) * (iy - y);
+					const wght = Math.exp(-dsq / (2 * r * r)) / (Math.PI * 2 * r * r);
+					
+					idx = bitShiftL(y1 * width + x1, 2);
 					
 					red += data[idx] * wght;
 					green += data[idx + 1] * wght;
@@ -40,7 +42,7 @@ export default function(r) {
 					wsum += wght;
 				}
 				
-				let idx = bitShiftL(y * width + x, 2);
+				idx = bitShiftL(y * width + x, 2);
 				
 				data[idx] = Math.round(red / wsum);
 				data[idx + 1] = Math.round(green / wsum);

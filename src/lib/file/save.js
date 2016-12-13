@@ -8,7 +8,7 @@ export default (buffer, filePath) => new Promise((resolve, reject) => {
 			return reject(err);
 		}
 		
-		let stream = fs.createWriteStream(filePath);
+		const stream = fs.createWriteStream(filePath);
 		
 		stream.on("open", () => {
 			stream.write(buffer);

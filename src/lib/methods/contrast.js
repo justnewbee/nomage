@@ -12,7 +12,7 @@ export default function(amount = 0, x1, y1, x2, y2) {
 		return this;
 	}
 	
-	let {data} = this;
+	const {data} = this;
 	
 	function adjust(n) {
 		let x;

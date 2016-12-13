@@ -108,16 +108,25 @@ class Image {
 		}
 		
 		[x1, y1, x2, y2] = range;
-		let {width} = this;
 		
 		for (let y = y1; y <= y2; y++) {
 			for (let x = x1; x <= x2; x++) {
-				fn((width * (y - 1) + x - 1) * 4, x, y);
+				fn(this._getPixelIndex(x, y), x, y);
 			}
 		}
 		
 		return this;
 	}
+	
+	/**
+	 * returns the offset of a pixel in the bitmap buffer
+	 * @param {Integer} x
+	 * @param {Integer} y
+	 * @returns {Integer} the index of the pixel or -1 if not found
+	 */
+	_getPixelIndex(x, y) {
+		return (this.width * (y - 1) + x - 1) * 4;
+	};
 	
 	/**
 	 * Writes the image to a local file
@@ -126,6 +135,13 @@ class Image {
 	 * @returns {Promise}
 	 */
 	save(savePath, quality) {
+		if (/\.(\d+)$/.test(savePath)) {
+			
+		}
+		
+		
+		
+		
 		return bitmapEncode(this._bitmap, quality).then(buffer => fileSave(buffer, savePath));
 	}
 }

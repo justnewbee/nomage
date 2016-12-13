@@ -7,7 +7,7 @@
  * @param {Integer} y2 end coordinate y
  */
 export default function(x1, y1, x2, y2) {
-	let range = this._getRange(x1, y1, x2, y2);
+	const range = this._getRange(x1, y1, x2, y2);
 	
 	if (!range) { // cropped nothing
 		return this;
@@ -18,10 +18,10 @@ export default function(x1, y1, x2, y2) {
 		return this;
 	}
 	
-	let {data} = this;
-	let w = x2 - x1 + 1;
-	let h = y2 - y1 + 1;
-	let buffer = new Buffer(w * h * 4);
+	const {data} = this;
+	const w = x2 - x1 + 1;
+	const h = y2 - y1 + 1;
+	const buffer = new Buffer(w * h * 4);
 	let offset = 0;
 	
 	this._scan(idx => {

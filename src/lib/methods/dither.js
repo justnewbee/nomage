@@ -15,10 +15,10 @@ const DITHER_RGB565_MATRIX = [
  * @param {Integer} [y2]
  */
 export default function(x1, y1, x2, y2) {
-	let {data} = this;
+	const {data} = this;
 	
 	return this._scan((idx, x, y) => {
-		let dither = DITHER_RGB565_MATRIX[bitShiftL(bitAnd(y, 3), 2) + x % 4];
+		const dither = DITHER_RGB565_MATRIX[bitShiftL(bitAnd(y, 3), 2) + x % 4];
 		
 		data[idx] = Math.min(data[idx] + dither, 0xff);
 		data[idx + 1] = Math.min(data[idx + 1] + dither, 0xff);

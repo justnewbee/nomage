@@ -314,6 +314,34 @@ describe("nomage", function() {
 		});
 	});
 	
+	describe("draw on images", () => {
+		function test(op) {
+			return function(what) {
+				return Promise.all([nomage(what.PATH), nomage(IMAGES.LOGO_LACRIMOSA.PATH)]).then(arr => {
+					let [imgToDrawOn, imgLogo] = arr;
+					
+					return imgToDrawOn[op](imgLogo).save(composeSavePath(what.PATH_SAVE, op));
+				}).should.be.fulfilled();
+			};
+		}
+		
+		describe("blit", () => {
+			it("bmp", () => test("blit")(IMAGES.BMP));
+			it("jpg", () => test("blit")(IMAGES.JPG));
+			it("png", () => test("blit")(IMAGES.PNG));
+		});
+		describe("compose", () => {
+			it("bmp", () => test("compose")(IMAGES.BMP));
+			it("jpg", () => test("compose")(IMAGES.JPG));
+			it("png", () => test("compose")(IMAGES.PNG));
+		});
+		describe("mask", () => {
+			it("bmp", () => test("mask")(IMAGES.BMP));
+			it("jpg", () => test("mask")(IMAGES.JPG));
+			it("png", () => test("mask")(IMAGES.PNG));
+		});
+	});
+	
 	describe("sizing", () => {
 		describe("crop", () => {
 			function testOnSaved(savedImg, args) {

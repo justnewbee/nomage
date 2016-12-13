@@ -64,7 +64,7 @@ export default file => new Promise((resolve, reject) => {
 	}
 	
 	bitMap.mime = mime;
-	bitMap.data_ = buffer; // file buffer and image buffer are quite different, put one here for ref
+	bitMap._buffer = buffer; // file buffer and image buffer are quite different, put one here for ref
 	
 	return bitMap;
 });

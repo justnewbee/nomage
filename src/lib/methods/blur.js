@@ -47,7 +47,7 @@ export default function(r) {
 		throw new Error("r must be greater than 0");
 	}
 	
-	let {data, width, height} = this;
+	const {data, width, height} = this;
 	let wm = width - 1;
 	let hm = height - 1;
 	let rad1 = r + 1;
