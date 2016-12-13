@@ -31,7 +31,7 @@ function extToMime(ext = "") {
 	
 	for (mime in MIME_MAP) {
 		if (MIME_MAP.hasOwnProperty(mime)) {
-			if (MIME_MAP[mime].indexOf(ext)) {
+			if (MIME_MAP[mime].indexOf(ext) >= 0) {
 				return mime;
 			}
 		}
@@ -42,6 +42,14 @@ function extToMime(ext = "") {
 
 export default {
 	BMP, JPG, PNG,
+	/**
+	 * check if the mime is supported yet
+	 * @param {String} mime
+	 * @return {Boolean}
+	 */
+	isSupported(mime) {
+		return [BMP, JPG, PNG].indexOf(mime) >= 0;
+	},
 	/**
 	 * determine supported image mime type string from file path or buffer by
 	 * checking the [magic number](http://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files) of the buffer

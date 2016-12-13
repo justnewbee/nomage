@@ -3,6 +3,7 @@ import fs from "fs";
 
 import bitmapDecode from "./lib/bitmap/decode";
 import bitmapEncode from "./lib/bitmap/encode";
+import fileMime from "./lib/file/mime";
 import fileSave from "./lib/file/save";
 
 //function createBitmapFromScratch(w, h, fill) {
@@ -70,7 +71,7 @@ class Image {
 	 * @return {Array} or null
 	 */
 	_getRange(x1 = 1, y1 = 1, x2 = this.width, y2 = this.height) {
-		let {width, height} = this;
+		const {width, height} = this;
 		
 		// make sure (x1, y1) is the top-left corner of the range and (x2, y2) the bottom-right
 		if (x1 > x2) {
@@ -102,7 +103,8 @@ class Image {
 	 * @param {Integer} [y2=this.height] the height of the scan region
 	 */
 	_scan(fn, x1, y1, x2, y2) {
-		let range = this._getRange(x1, y1, x2, y2);
+		const range = this._getRange(x1, y1, x2, y2);
+		
 		if (!range) {
 			return this;
 		}
@@ -130,34 +132,29 @@ class Image {
 	
 	/**
 	 * Writes the image to a local file
-	 * @param {String} savePath a path to the destination file (either PNG or JPG)
-	 * @param {Number} quality [1-100] only for JPEG
+	 * @param {String} savePath a path to the destination file, will try to determine mime from it
+	 * @param {Object} [opts] saving options
 	 * @returns {Promise}
 	 */
-	save(savePath, quality) {
-		if (/\.(\d+)$/.test(savePath)) {
-			
+	save(savePath, opts = {}) {
+		if (!opts.mime) {
+			opts.mime = fileMime.determine(savePath);
 		}
 		
-		
-		
-		
-		return bitmapEncode(this._bitmap, quality).then(buffer => fileSave(buffer, savePath));
+		return bitmapEncode(this._bitmap, opts).then(buffer => fileSave(buffer, savePath));
 	}
 }
 
 // load methods
 (pluginDir => {
-	let protoOfImage = Image.prototype;
+	const protoOfImage = Image.prototype;
 	
 	fs.readdirSync(pluginDir).forEach(fileName => {
 		if (fileName.startsWith("_") || !fileName.endsWith(".js")) {
 			return;
 		}
 		
-		let pluginName = fileName.replace(/\.js$/, "");
-		
-		protoOfImage[pluginName] = require(path.join(pluginDir, fileName));
+		protoOfImage[fileName.replace(/\.js$/, "")] = require(path.join(pluginDir, fileName));
 	});
 })(path.join(__dirname, "lib/methods"));
 

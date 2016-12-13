@@ -12,11 +12,14 @@ describe("nomage", function() {
 	 */
 	function testOpAndSaveGen(op, ...args) {
 		let partial = false;
+		let saveExt;
 		
 		if (op === true) { // for partial
 			partial = true;
 			op = args.shift();
 		}
+		
+		[op, saveExt = ""] = op.split("!"); // add `!ext` in op to determine what type should be saved
 		
 		/**
 		 * @param {Object} what
@@ -28,9 +31,9 @@ describe("nomage", function() {
 				args.push(what.W / 4, what.H / 4, what.W / 4 * 3, what.H / 4 * 3);
 			}
 			
-			let opFn = img[op];
-			let savePath = composeSavePath(what.PATH_SAVE, `${op}(${args.join(", ")})`);
-			let opRtn = opFn.apply(img, args);
+			const opFn = img[op];
+			const savePath = composeSavePath(what.PATH_SAVE, `${op}(${args.join(", ")})`) + (saveExt ? "." + saveExt : "");
+			const opRtn = opFn.apply(img, args);
 			
 			opRtn.should.be.exactly(img); // test for chaining
 			
@@ -75,6 +78,23 @@ describe("nomage", function() {
 			it("jpg save q25", () => nomage(IMAGES.JPG.PATH).then(img => img.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "q25"), 25)).should.be.fulfilled());
 		});
 	});
+	describe("saveAs", function() {
+		function test(what, ext) {
+			return nomage(what.PATH).then(img => img.save(`${what.PATH_SAVE}.${ext}`)).should.be.fulfilled();
+		}
+		describe("save as bmp", () => {
+			it("jpg", () => test(IMAGES.JPG, "bmp"));
+			it("png", () => test(IMAGES.PNG, "bmp"));
+		});
+		describe("save as jpg", () => {
+			it("bmp", () => test(IMAGES.BMP, "jpg"));
+			it("png", () => test(IMAGES.PNG, "jpg"));
+		});
+		describe("save as png", () => {
+			it("bmp", () => test(IMAGES.BMP, "png"));
+			it("jpg", () => test(IMAGES.JPG, "png"));
+		});
+	});
 	
 	describe("flipping", () => {
 		describe("horizontal", () => {
@@ -96,8 +116,8 @@ describe("nomage", function() {
 	
 	describe("alpha-full", () => {
 		describe("opacity", () => {
-			it("bmp opacity", testOpAndSaveGen("opacity", 0.667)(IMAGES.BMP));
-			it("jpg opacity", testOpAndSaveGen("opacity", 0.667)(IMAGES.JPG));
+			it("bmp opacity", testOpAndSaveGen("opacity!png", 0.667)(IMAGES.BMP));
+			it("jpg opacity", testOpAndSaveGen("opacity!png", 0.667)(IMAGES.JPG));
 			it("png opacity", testOpAndSaveGen("opacity", 0.667)(IMAGES.PNG));
 		});
 		describe("opaque", () => {
@@ -108,8 +128,8 @@ describe("nomage", function() {
 	});
 	describe("alpha-partial", () => {
 		describe("opacity", () => {
-			it("bmp opacity", testOpAndSaveGen(true, "opacity", 0.3)(IMAGES.BMP));
-			it("jpg opacity", testOpAndSaveGen(true, "opacity", 0.3)(IMAGES.JPG));
+			it("bmp opacity", testOpAndSaveGen(true, "opacity!png", 0.3)(IMAGES.BMP));
+			it("jpg opacity", testOpAndSaveGen(true, "opacity!png", 0.3)(IMAGES.JPG));
 			it("png opacity", testOpAndSaveGen(true, "opacity", 0.3)(IMAGES.PNG));
 		});
 		describe("opaque", () => {
@@ -345,7 +365,7 @@ describe("nomage", function() {
 	describe("sizing", () => {
 		describe("crop", () => {
 			function testOnSaved(savedImg, args) {
-				let [x1, y1, x2, y2] = args;
+				const [x1, y1, x2, y2] = args;
 				
 				savedImg.width.should.equal(x2 - x1 + 1);
 				savedImg.height.should.equal(y2 - y1 + 1);
