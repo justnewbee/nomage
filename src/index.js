@@ -128,7 +128,29 @@ class Image {
 	 */
 	_getPixelIndex(x, y) {
 		return (this.width * (y - 1) + x - 1) * 4;
-	};
+	}
+	
+	_getPixel(x, y) {
+		const {data} = this;
+		const idx = this._getPixelIndex(x, y);
+		
+		return {
+			r: data[idx],
+			g: data[idx + 1],
+			b: data[idx + 2],
+			a: data[idx + 3]
+		};
+	}
+	
+	clone() {
+		const {data: dataToClone, width, height, mime} = this;
+		const data = new Buffer(dataToClone.length);
+		this._scan(idx => data.writeUInt32BE(dataToClone.readUInt32BE(idx, true), idx, true));
+		
+		return new Image({
+			data, width, height, mime
+		});
+	}
 	
 	/**
 	 * Writes the image to a local file
