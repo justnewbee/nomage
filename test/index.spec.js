@@ -73,9 +73,6 @@ describe("nomage", function() {
 			it("bmp", () => test(IMAGES.BMP));
 			it("jpg", () => test(IMAGES.JPG));
 			it("png", () => test(IMAGES.PNG));
-			
-			it("jpg save q50", () => nomage(IMAGES.JPG.PATH).then(img => img.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "q50"), 50)).should.be.fulfilled());
-			it("jpg save q25", () => nomage(IMAGES.JPG.PATH).then(img => img.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "q25"), 25)).should.be.fulfilled());
 		});
 	});
 	describe("saveAs", function() {
@@ -103,9 +100,11 @@ describe("nomage", function() {
 			it("bmp", () => test(IMAGES.BMP, 25));
 			it("jpg", () => test(IMAGES.JPG, 25));
 			it("png", () => test(IMAGES.PNG, 25));
+			
 			it("bmp", () => test(IMAGES.BMP, 50));
 			it("jpg", () => test(IMAGES.JPG, 50));
 			it("png", () => test(IMAGES.PNG, 50));
+			
 			it("bmp", () => test(IMAGES.BMP, 75));
 			it("jpg", () => test(IMAGES.JPG, 75));
 			it("png", () => test(IMAGES.PNG, 75));
@@ -352,11 +351,22 @@ describe("nomage", function() {
 	
 	describe("draw on images", () => {
 		function test(op) {
+			const toTheMiddleAndPartial = op === true;
+			
+			if (toTheMiddleAndPartial) {
+				op = arguments[1];
+			}
+			
 			return function(what) {
 				return Promise.all([nomage(what.PATH), nomage(IMAGES.LOGO_LACRIMOSA.PATH)]).then(arr => {
-					let [imgToDrawOn, imgLogo] = arr;
+					const [imgToDrawOn, imgLogo] = arr;
+					const args = toTheMiddleAndPartial ? [
+						imgToDrawOn.width / 2, imgToDrawOn.height / 2,
+						imgLogo.width / 3, imgLogo.height / 3, imgLogo.width * 2 / 3, imgLogo.height * 2 / 3
+					].map(v => Math.floor(v)) : [];
 					
-					return imgToDrawOn[op](imgLogo).save(composeSavePath(what.PATH_SAVE, op));
+					
+					return imgToDrawOn[op](imgLogo, ...args).save(composeSavePath(what.PATH_SAVE, `${op}(another${args.length ? `, ${args.join(", ")}` : ""})`));
 				}).should.be.fulfilled();
 			};
 		}
@@ -365,16 +375,33 @@ describe("nomage", function() {
 			it("bmp", () => test("blit")(IMAGES.BMP));
 			it("jpg", () => test("blit")(IMAGES.JPG));
 			it("png", () => test("blit")(IMAGES.PNG));
+			it("bmp", () => test(true, "blit")(IMAGES.BMP));
+			it("jpg", () => test(true, "blit")(IMAGES.JPG));
+			it("png", () => test(true, "blit")(IMAGES.PNG));
+//			it("bmp on to jpg", () => Promise.all([nomage(IMAGES.JPG.PATH), nomage(IMAGES.BMP.PATH)]).then(arr => {
+//				const [imgJpg, imgBmp] = arr;
+//				
+//				return imgJpg.blit(imgBmp,
+//						imgJpg.width / 2, imgJpg.height / 2,
+//						imgBmp.width / 3, imgBmp.height / 3, imgBmp.width * 2 / 3, imgBmp.height * 2 / 3)
+//					.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "blit_part_of_bmp"));
+//			}).should.be.fulfilled());
 		});
 		describe("compose", () => {
 			it("bmp", () => test("compose")(IMAGES.BMP));
 			it("jpg", () => test("compose")(IMAGES.JPG));
 			it("png", () => test("compose")(IMAGES.PNG));
+			it("bmp", () => test(true, "compose")(IMAGES.BMP));
+			it("jpg", () => test(true, "compose")(IMAGES.JPG));
+			it("png", () => test(true, "compose")(IMAGES.PNG));
 		});
 		describe("mask", () => {
 			it("bmp", () => test("mask")(IMAGES.BMP));
 			it("jpg", () => test("mask")(IMAGES.JPG));
 			it("png", () => test("mask")(IMAGES.PNG));
+			it("bmp", () => test(true, "mask")(IMAGES.BMP));
+			it("jpg", () => test(true, "mask")(IMAGES.JPG));
+			it("png", () => test(true, "mask")(IMAGES.PNG));
 		});
 	});
 	
