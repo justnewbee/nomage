@@ -6,34 +6,6 @@ import bitmapEncode from "./lib/bitmap/encode";
 import fileMime from "./lib/file/mime";
 import fileSave from "./lib/file/save";
 
-//function createBitmapFromScratch(w, h, fill) {
-//	let bitmap = {
-//		buffer: new Buffer(w * h * 4),
-//		width: w,
-//		height: h,
-//	};
-//	
-//	for (let i = 0; i < bitmap.buffer.length; i = i + 4) {
-//		bitmap.buffer.writeUInt32BE(fill, i);
-//	}
-//}
-//function createFromPath(filePath) {
-//	var that = this;
-//	
-//	let buffer = fs.readFileSync(filePath);
-//	
-//	parseBitmap(buffer);
-////	
-////	getMIMEFromPath(filePath, function(err, mime) {
-////		fs.readFileSync(filePath, function(err, data) {
-////			if (err) {
-////				return throwError.call(that, err, cb);
-////			}
-////			parseBitmap.call(buffer, mime, cb);
-////		});
-////	});
-//}
-
 /**
  * a wrapper over bitmap
  */
@@ -141,6 +113,25 @@ class Image {
 			a: data[idx + 3]
 		};
 	}
+	/**
+	 * converts the image data to a buffer
+	 * @param {Object} [opts] some options
+	 * @return {Promise.<Buffer>}
+	 */
+	toBuffer(opts) {
+		return bitmapEncode(this._bitmap, opts);
+	}
+	
+	/**
+	 * converts the image data to a base 64 string
+	 * @param {String} [mime]
+	 * @return {Promise.<String>}
+	 */
+	toBase64(mime = this.mime) {
+		return this.toBuffer({
+			mime
+		}).then(buffer => `data:${mime};base64,${buffer.toString("base64")}`);
+	}
 	
 	clone() {
 		const {data: dataToClone, width, height, mime} = this;
@@ -163,7 +154,7 @@ class Image {
 			opts.mime = fileMime.determine(savePath);
 		}
 		
-		return bitmapEncode(this._bitmap, opts).then(buffer => fileSave(buffer, savePath));
+		return this.toBuffer(opts).then(buffer => fileSave(buffer, savePath));
 	}
 }
 
@@ -180,22 +171,9 @@ class Image {
 	});
 })(path.join(__dirname, "lib/methods"));
 
-
-
-export default file => {
-//	let arg0 = arguments[0];
-//	
-//	if ("number" === typeof arg0) {
-//		this._bitmap = createBitmapFromScratch(arg0, arguments[1], arguments[2]);
-////		} else if ("object" === typeof arg0 && arg0.constructor === Image) {
-////			this._createFromClone();
-////		} else if (/(?:[a-z]+:)?\/\//.test(arg0)) {
-////			this._createFromUrl(arg0);
-//	} else if ("string" === typeof arg0 || Buffer.isBuffer(arg0)) {
-//		this._bitmap = bitmap;
-//	} else {
-//		throw new Error("no matching constructor overloading was found. Please see the docs for how to call the Image constructor.");
-//	}
-	
-	return bitmapDecode(file).then(bitmap => new Image(bitmap));
-};
+/**
+ * create an Image instance using file path or buffer
+ * @param {String|Buffer} file
+ * @return {Promise.<Image>}
+ */
+export default file => bitmapDecode(file).then(bitmap => new Image(bitmap));

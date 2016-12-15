@@ -2,12 +2,12 @@
  * composites a source image over to this image respecting alpha channels
  * http://stackoverflow.com/questions/7438263/alpha-compositing-algorithm-blend-modes
  * @param {Image} srcImg
- * @param {Integer} x the x position to blit the image
- * @param {Integer} y the y position to blit the image
- * @param {Integer} [srcX]
- * @param {Integer} [srcY]
- * @param {Integer} [srcW]
- * @param {Integer} [srcH]
+ *  @param {Integer} [x=1] the x position to compose
+ * @param {Integer} [y=1] the y position to compose
+ * @param {Integer} [srcX=1] the x position from which to compose
+ * @param {Integer} [srcY=1] the y position from which to compose
+ * @param {Integer} [srcW] the width to which to compose
+ * @param {Integer} [srcH] the height to which to compose
  */
 export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.width, srcH = srcImg.height) {
 	x = Math.round(x);
@@ -39,4 +39,4 @@ export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.
 	}, srcX, srcY, srcW, srcH);
 	
 	return this;
-};
+}

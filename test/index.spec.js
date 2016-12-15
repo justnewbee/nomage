@@ -19,7 +19,13 @@ describe("nomage", function() {
 			op = args.shift();
 		}
 		
-		[op, saveExt = ""] = op.split("!"); // add `!ext` in op to determine what type should be saved
+		const arr = op.split("!"); // add `!ext` in op to determine what type should be saved
+		
+		// add `!ext` in op to determine what type should be saved
+		if (arr[1]) {
+			op = arr[0];
+			saveExt = arr[1];
+		}
 		
 		/**
 		 * @param {Object} what
@@ -43,7 +49,7 @@ describe("nomage", function() {
 	
 	describe("getter", function() {
 		function test(what) {
-			return nomage(what.PATH).then(img => {
+			return () => nomage(what.PATH).then(img => {
 				img.width.should.equal(what.W);
 				img.height.should.equal(what.H);
 				img.mime.should.equal(what.MIME);
@@ -53,15 +59,27 @@ describe("nomage", function() {
 		}
 		
 		describe("getter-local", () => {
-			it("bmp", () => test(IMAGES.BMP));
-			it("jpg", () => test(IMAGES.JPG));
-			it("png", () => test(IMAGES.PNG));
+			it("bmp", test(IMAGES.BMP));
+			it("jpg", test(IMAGES.JPG));
+			it("png", test(IMAGES.PNG));
 		});
 		describe("getter-remote", () => {
-			it("bmp-remote", () => test(IMAGES.BMP_REMOTE));
-			it("jpg-remote", () => test(IMAGES.JPG_REMOTE));
-			it("png-remote", () => test(IMAGES.PNG_REMOTE));
+			it("bmp-remote", test(IMAGES.BMP_REMOTE));
+			it("jpg-remote", test(IMAGES.JPG_REMOTE));
+			it("png-remote", test(IMAGES.PNG_REMOTE));
 		});
+	});
+	
+	describe("base64", function() {
+		function test(what) {
+			return () => nomage(what.PATH).then(img => img.toBase64()).then(base64 => {
+				base64.should.startWith(`data:${what.MIME};base64,`);
+			}).should.be.fulfilled();
+		}
+		
+		it("bmp", test(IMAGES.BMP));
+		it("jpg", test(IMAGES.JPG));
+		it("png", test(IMAGES.PNG));
 	});
 	
 	describe("clone", () => {
@@ -112,20 +130,20 @@ describe("nomage", function() {
 	});
 	describe("saveQ", function() { // can only be saved as jpg
 		function test(what, q) {
-			return nomage(what.PATH).then(img => img.save(composeSavePath(what.PATH_SAVE, `q${q}`) + ".jpg", { quality: q })).should.be.fulfilled();
+			return () => nomage(what.PATH).then(img => img.save(composeSavePath(what.PATH_SAVE, `q${q}`) + ".jpg", { quality: q })).should.be.fulfilled();
 		}
 		describe("save with quality, can only be saved as jpg", () => {
-			it("bmp", () => test(IMAGES.BMP, 25));
-			it("jpg", () => test(IMAGES.JPG, 25));
-			it("png", () => test(IMAGES.PNG, 25));
+			it("bmp", test(IMAGES.BMP, 25));
+			it("jpg", test(IMAGES.JPG, 25));
+			it("png", test(IMAGES.PNG, 25));
 			
-			it("bmp", () => test(IMAGES.BMP, 50));
-			it("jpg", () => test(IMAGES.JPG, 50));
-			it("png", () => test(IMAGES.PNG, 50));
+			it("bmp", test(IMAGES.BMP, 50));
+			it("jpg", test(IMAGES.JPG, 50));
+			it("png", test(IMAGES.PNG, 50));
 			
-			it("bmp", () => test(IMAGES.BMP, 75));
-			it("jpg", () => test(IMAGES.JPG, 75));
-			it("png", () => test(IMAGES.PNG, 75));
+			it("bmp", test(IMAGES.BMP, 75));
+			it("jpg", test(IMAGES.JPG, 75));
+			it("png", test(IMAGES.PNG, 75));
 		});
 	});
 	
@@ -370,56 +388,53 @@ describe("nomage", function() {
 	describe("draw on images", () => {
 		function test(op) {
 			const toTheMiddleAndPartial = op === true;
+			let saveExt;
 			
 			if (toTheMiddleAndPartial) {
 				op = arguments[1];
 			}
+			const arr = op.split("!"); // add `!ext` in op to determine what type should be saved
 			
-			return function(what) {
-				return Promise.all([nomage(what.PATH), nomage(IMAGES.LOGO_LACRIMOSA.PATH)]).then(arr => {
-					const [imgToDrawOn, imgLogo] = arr;
-					const args = toTheMiddleAndPartial ? [
-						imgToDrawOn.width / 2, imgToDrawOn.height / 2,
-						imgLogo.width / 3, imgLogo.height / 3, imgLogo.width * 2 / 3, imgLogo.height * 2 / 3
-					].map(v => Math.floor(v)) : [];
-					
-					
-					return imgToDrawOn[op](imgLogo, ...args).save(composeSavePath(what.PATH_SAVE, `${op}(another${args.length ? `, ${args.join(", ")}` : ""})`));
-				}).should.be.fulfilled();
-			};
+			// add `!ext` in op to determine what type should be saved
+			if (arr[1]) {
+				op = arr[0];
+				saveExt = arr[1];
+			}
+			
+			return what => () => Promise.all([nomage(what.PATH), nomage(IMAGES.LOGO_LACRIMOSA.PATH)]).then(resultArr => {
+				const [imgToDrawOn, imgLogo] = resultArr;
+				const args = toTheMiddleAndPartial ? [
+					imgToDrawOn.width / 2, imgToDrawOn.height / 2,
+					imgLogo.width / 5, imgLogo.height / 5, imgLogo.width * 4 / 5, imgLogo.height * 4 / 5
+				].map(v => Math.floor(v)) : [];
+				
+				return imgToDrawOn[op](imgLogo, ...args).save(composeSavePath(what.PATH_SAVE, `${op}(another${args.length ? `, ${args.join(", ")}` : ""})`) + (saveExt ? `.${saveExt}` : ""));
+			}).should.be.fulfilled();
 		}
 		
 		describe("blit", () => {
-			it("bmp", () => test("blit")(IMAGES.BMP));
-			it("jpg", () => test("blit")(IMAGES.JPG));
-			it("png", () => test("blit")(IMAGES.PNG));
-			it("bmp", () => test(true, "blit")(IMAGES.BMP));
-			it("jpg", () => test(true, "blit")(IMAGES.JPG));
-			it("png", () => test(true, "blit")(IMAGES.PNG));
-//			it("bmp on to jpg", () => Promise.all([nomage(IMAGES.JPG.PATH), nomage(IMAGES.BMP.PATH)]).then(arr => {
-//				const [imgJpg, imgBmp] = arr;
-//				
-//				return imgJpg.blit(imgBmp,
-//						imgJpg.width / 2, imgJpg.height / 2,
-//						imgBmp.width / 3, imgBmp.height / 3, imgBmp.width * 2 / 3, imgBmp.height * 2 / 3)
-//					.save(composeSavePath(IMAGES.JPG.PATH_SAVE, "blit_part_of_bmp"));
-//			}).should.be.fulfilled());
+			it("bmp", test("blit")(IMAGES.BMP));
+			it("jpg", test("blit")(IMAGES.JPG));
+			it("png", test("blit")(IMAGES.PNG));
+			it("bmp", test(true, "blit")(IMAGES.BMP));
+			it("jpg", test(true, "blit")(IMAGES.JPG));
+			it("png", test(true, "blit")(IMAGES.PNG));
 		});
 		describe("compose", () => {
-			it("bmp", () => test("compose")(IMAGES.BMP));
-			it("jpg", () => test("compose")(IMAGES.JPG));
-			it("png", () => test("compose")(IMAGES.PNG));
-			it("bmp", () => test(true, "compose")(IMAGES.BMP));
-			it("jpg", () => test(true, "compose")(IMAGES.JPG));
-			it("png", () => test(true, "compose")(IMAGES.PNG));
+			it("bmp", test("compose")(IMAGES.BMP));
+			it("jpg", test("compose")(IMAGES.JPG));
+			it("png", test("compose")(IMAGES.PNG));
+			it("bmp", test(true, "compose")(IMAGES.BMP));
+			it("jpg", test(true, "compose")(IMAGES.JPG));
+			it("png", test(true, "compose")(IMAGES.PNG));
 		});
 		describe("mask", () => {
-			it("bmp", () => test("mask")(IMAGES.BMP));
-			it("jpg", () => test("mask")(IMAGES.JPG));
-			it("png", () => test("mask")(IMAGES.PNG));
-			it("bmp", () => test(true, "mask")(IMAGES.BMP));
-			it("jpg", () => test(true, "mask")(IMAGES.JPG));
-			it("png", () => test(true, "mask")(IMAGES.PNG));
+			it("bmp", test("mask!png")(IMAGES.BMP));
+			it("jpg", test("mask!png")(IMAGES.JPG));
+			it("png", test("mask")(IMAGES.PNG));
+			it("bmp", test(true, "mask!png")(IMAGES.BMP));
+			it("jpg", test(true, "mask!png")(IMAGES.JPG));
+			it("png", test(true, "mask")(IMAGES.PNG));
 		});
 	});
 	

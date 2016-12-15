@@ -8,7 +8,7 @@ import pngEncode from "./png/encode";
  * encode a bitmap object back to a file buffer - which then can be used for saving
  * @param {Object} bitmap
  * @param {Object} [opts] only for JPEG
- * @return {Buffer} file buffer instead of image buffer
+ * @return {Promise.<Buffer>} file buffer instead of image buffer
  */
 export default (bitmap, opts = {}) => new Promise((resolve, reject) => {
 	let {mime} = opts;

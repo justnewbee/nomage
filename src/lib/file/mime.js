@@ -54,7 +54,7 @@ export default {
 	 * determine supported image mime type string from file path or buffer by
 	 * checking the [magic number](http://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files) of the buffer
 	 * @param {String|Buffer} file file path or file buffer
-	 * @param {Boolean} lookDeeper by default file ext is used to determine image mime, however, when the image comes with no ext,
+	 * @param {Boolean} [lookDeeper] by default file ext is used to determine image mime, however, when the image comes with no ext,
 	 *   or cannot determine whether it is an image, we still will look into the buffer
 	 * @return {String}
 	 * @throws {Error} when filePath refers to a file that cannot be read or does NOT exist - from readChunk

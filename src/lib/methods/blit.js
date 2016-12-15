@@ -1,12 +1,12 @@
 /**
  * blits a source image on to this image
  * @param {Image} srcImg
- * @param {Integer} x the x position to blit the image
- * @param {Integer} y the y position to blit the image
- * @param {Integer} srcX (optional) the x position from which to crop the source image
- * @param {Integer} srcY (optional) the y position from which to crop the source image
- * @param {Integer} srcW (optional) the width to which to crop the source image
- * @param {Integer} srcH (optional) the height to which to crop the source image
+ * @param {Integer} [x=1] the x position to blit
+ * @param {Integer} [y=1] the y position to blit
+ * @param {Integer} [srcX=1] the x position from which to blit
+ * @param {Integer} [srcY=1] the y position from which to blit
+ * @param {Integer} [srcW] the width to which to blit
+ * @param {Integer} [srcH] the height to which to blit
  */
 export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.width, srcH = srcImg.height) {
 	x = Math.round(x);
@@ -29,4 +29,4 @@ export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.
 	}, srcX, srcY, srcW, srcH);
 	
 	return this;
-};
+}
