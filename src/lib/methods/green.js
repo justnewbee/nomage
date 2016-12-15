@@ -12,4 +12,4 @@ export default function(amount, x1, y1, x2, y2) {
 	return this._scan(idx => {
 		data[idx + 1] = Math.max(0, Math.min(data[idx + 1] + amount, 255));
 	}, x1, y1, x2, y2);
-};
+}

@@ -24,4 +24,4 @@ export default function(color, percentage = 50, x1, y1, x2, y2) {
 		data[idx + 1] = (g2 - g) * p + g;
 		data[idx + 2] = (b2 - b) * p + b;
 	}, x1, y1, x2, y2);
-};
+}

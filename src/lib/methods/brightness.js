@@ -25,4 +25,4 @@ export default function(amount = 0, x1, y1, x2, y2) {
 			data[idx + 2] = data[idx + 2] + (255 - data[idx + 2]) * amount;
 		}
 	}, x1, y1, x2, y2);
-};
+}

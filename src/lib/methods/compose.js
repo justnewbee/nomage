@@ -1,8 +1,7 @@
 /**
  * composites a source image over to this image respecting alpha channels
- * http://stackoverflow.com/questions/7438263/alpha-compositing-algorithm-blend-modes
  * @param {Image} srcImg
- *  @param {Integer} [x=1] the x position to compose
+ * @param {Integer} [x=1] the x position to compose
  * @param {Integer} [y=1] the y position to compose
  * @param {Integer} [srcX=1] the x position from which to compose
  * @param {Integer} [srcY=1] the y position from which to compose

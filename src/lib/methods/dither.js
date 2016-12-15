@@ -24,4 +24,4 @@ export default function(x1, y1, x2, y2) {
 		data[idx + 1] = Math.min(data[idx + 1] + dither, 0xff);
 		data[idx + 2] = Math.min(data[idx + 2] + dither, 0xff);
 	}, x1, y1, x2, y2);
-};
+}

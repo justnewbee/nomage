@@ -18,4 +18,4 @@ export default function(amount = 2, x1, y1, x2, y2) {
 		data[idx + 1] = Math.floor(data[idx + 1] / 255 * (amount - 1)) / (amount - 1) * 255;
 		data[idx + 2] = Math.floor(data[idx + 2] / 255 * (amount - 1)) / (amount - 1) * 255;
 	}, x1, y1, x2, y2);
-};
+}

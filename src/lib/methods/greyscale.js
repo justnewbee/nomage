@@ -15,4 +15,4 @@ export default function(x1, y1, x2, y2) {
 		data[idx + 1] = grey;
 		data[idx + 2] = grey;
 	}, x1, y1, x2, y2);
-};
+}

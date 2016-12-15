@@ -13,4 +13,4 @@ export default function(x1, y1, x2, y2) {
 		data[idx + 1] = 255 - data[idx + 1];
 		data[idx + 2] = 255 - data[idx + 2];
 	}, x1, y1, x2, y2);
-};
+}

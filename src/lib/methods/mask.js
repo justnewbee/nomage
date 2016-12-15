@@ -24,4 +24,4 @@ export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.
 	}, srcX, srcY, srcW, srcH);
 	
 	return this;
-};
+}

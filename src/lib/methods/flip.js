@@ -20,4 +20,4 @@ export default function(horizontal = true, vertical = false) {
 	this._bitmap.data = new Buffer(buffer);
 	
 	return this;
-};
+}
