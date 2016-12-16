@@ -22,4 +22,4 @@ export default function(color, x1, y1, x2, y2) {
 		data[idx + 1] = g ^ g2;
 		data[idx + 2] = b ^ b2;
 	}, x1, y1, x2, y2);
-};
+}

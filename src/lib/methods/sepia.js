@@ -21,4 +21,4 @@ export default function(x1, y1, x2, y2) {
 		data[idx + 1] = g < 255 ? g : 255;
 		data[idx + 2] = b < 255 ? b : 255;
 	}, x1, y1, x2, y2);
-};
+}

@@ -9,4 +9,4 @@
  */
 export default function(percentage, x1, y1, x2, y2) {
 	return this.mix([0, 0, 0], percentage, x1, y1, x2, y2);
-};
+}

@@ -14,26 +14,62 @@ class Image {
 		this._bitmap = bitmap;
 	}
 	
+	get data() {
+		return this._bitmap.data;
+	}
+	get mime() {
+		return this._bitmap.mime;
+	}
 	get width() {
 		return this._bitmap.width;
 	}
-	
 	get height() {
 		return this._bitmap.height;
 	}
 	
-	get mime() {
-		return this._bitmap.mime;
-	}
-	
-	get data() {
-		return this._bitmap.data;
-	}
-	
-	get base64() {
+	/**
+	 * get pixel color as 32bits HEX integer
+	 * @param {Integer} x
+	 * @param {Integer} y
+	 * @return {Integer} rgba color HEX that is below or equal to 0xFFFFFFFF
+	 */
+	getPixelColorHex(x, y) {
+		const {data} = this;
+		const idx = this._getPixelIndex(x, y);
 		
+		return data.readUInt32BE(idx);
 	}
-	
+	/**
+	 * set pixel color with 32bits HEX integer
+	 * @param {Integer} x
+	 * @param {Integer} y
+	 * @param {Integer} hex
+	 */
+	setPixelColorHex(x, y, hex) {
+		const {data} = this;
+		const idx = this._getPixelIndex(x, y);
+		
+		data.writeUInt32BE(hex, idx, true);
+		
+		return this;
+	}
+	/**
+	 * get pixel color as rgba object
+	 * @param {Integer} x
+	 * @param {Integer} y
+	 * @return {Object} r, g, b, a values are within the range [0, 255]
+	 */
+	getPixelColorRGBA(x, y) {
+		const {data} = this;
+		const idx = this._getPixelIndex(x, y);
+		
+		return {
+			r: data[idx],
+			g: data[idx + 1],
+			b: data[idx + 2],
+			a: data[idx + 3]
+		};
+	}
 	/**
 	 * get a range inside the image, if the range is outside of the image, null is returned
 	 * @param {Integer} [x1=1]

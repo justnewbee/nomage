@@ -13,16 +13,12 @@ export default function(amount = 0, x1, y1, x2, y2) {
 	}
 	
 	const {data} = this;
+	const multiplier = amount > 0 ? 1 - amount : 1 + amount;
+	const adjustment = amount > 0 ? 255 * amount : 0;
 	
 	return this._scan(idx => {
-		if (amount < 0) {
-			data[idx] = data[idx] * (1 + amount);
-			data[idx + 1] = data[idx + 1] * (1 + amount);
-			data[idx + 2] = data[idx + 2] * (1 + amount);
-		} else {
-			data[idx] = data[idx] + (255 - data[idx]) * amount;
-			data[idx + 1] = data[idx + 1] + (255 - data[idx + 1]) * amount;
-			data[idx + 2] = data[idx + 2] + (255 - data[idx + 2]) * amount;
-		}
+		data[idx] = data[idx] * multiplier + adjustment;
+		data[idx + 1] = data[idx + 1] * multiplier + adjustment;
+		data[idx + 2] = data[idx + 2] * multiplier + adjustment;
 	}, x1, y1, x2, y2);
 }

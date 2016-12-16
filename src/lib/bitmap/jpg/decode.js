@@ -50,12 +50,12 @@ function getUInit16(arrUInt8, offset) {
  * @return {Uint8Array}
  */
 function getDataBlock(arrUInt8, offset) {
-	let len = getUInit16(arrUInt8, offset);
+	const len = getUInit16(arrUInt8, offset);
 	return arrUInt8.subarray(offset + 2, offset + len);
 }
 
 function buildHuffmanTable(codeLengths, values) {
-	let code = [];
+	const code = [];
 	let length = 16;
 	let i;
 	let j;
@@ -105,15 +105,15 @@ function buildHuffmanTable(codeLengths, values) {
 }
 
 function decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, successivePrev, successive) {
-	let mcusPerLine = frame.mcusPerLine;
-	let progressive = frame.progressive;
-	let startOffset = offset;
+	const mcusPerLine = frame.mcusPerLine;
+	const progressive = frame.progressive;
+	const startOffset = offset;
+	const componentsLength = components.length;
 	let bitsData = 0;
 	let bitsCount = 0;
 	let eobrun = 0;
 	let successiveACState = 0;
 	let successiveACNextValue;
-	let componentsLength = components.length;
 	let component;
 	let mcu = 0;
 	let marker;
@@ -172,7 +172,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	}
 	
 	function receiveAndExtend(length) {
-		let n = receive(length);
+		const n = receive(length);
 		if (n >= bitShiftL(1, length - 1)) {
 			return n;
 		}
@@ -568,24 +568,24 @@ function buildComponentData(component) {
 		
 		// convert to 8-bit integers
 		for (i = 0; i < 64; ++i) {
-			let sample = 128 + bitShiftR(p[i] + 8, 4);
+			const sample = 128 + bitShiftR(p[i] + 8, 4);
 			dataOut[i] = sample < 0 ? 0 : sample > 0xFF ? 0xFF : sample;
 		}
 	}
 	
 	for (let blockRow = 0; blockRow < blocksPerColumn; blockRow++) {
-		let scanLine = bitShiftL(blockRow, 3);
+		const scanLine = bitShiftL(blockRow, 3);
 		for (i = 0; i < 8; i++) {
 			lines.push(new Uint8Array(samplesPerLine));
 		}
 		for (let blockCol = 0; blockCol < blocksPerLine; blockCol++) {
 			quantizeAndInverse(component.blocks[blockRow][blockCol], r, R);
 			
+			const sample = bitShiftL(blockCol, 3);
 			let offset = 0;
-			let sample = bitShiftL(blockCol, 3);
 			
 			for (j = 0; j < 8; j++) {
-				let line = lines[scanLine + j];
+				const line = lines[scanLine + j];
 				for (i = 0; i < 8; i++) {
 					line[sample + i] = r[offset++];
 				}
@@ -615,18 +615,18 @@ function prepareComponents(frame) {
 		}
 	});
 	
-	let mcusPerLine = Math.ceil(frame.samplesPerLine / 8 / maxH);
-	let mcusPerColumn = Math.ceil(frame.scanLines / 8 / maxV);
+	const mcusPerLine = Math.ceil(frame.samplesPerLine / 8 / maxH);
+	const mcusPerColumn = Math.ceil(frame.scanLines / 8 / maxV);
 	
 	each(frame.components, v => {
-		let blocksPerLine = Math.ceil(Math.ceil(frame.samplesPerLine / 8) * v.h / maxH);
-		let blocksPerColumn = Math.ceil(Math.ceil(frame.scanLines / 8) * v.v / maxV);
-		let blocksPerLineForMcu = mcusPerLine * v.h;
-		let blocksPerColumnForMcu = mcusPerColumn * v.v;
-		let blocks = [];
+		const blocksPerLine = Math.ceil(Math.ceil(frame.samplesPerLine / 8) * v.h / maxH);
+		const blocksPerColumn = Math.ceil(Math.ceil(frame.scanLines / 8) * v.v / maxV);
+		const blocksPerLineForMcu = mcusPerLine * v.h;
+		const blocksPerColumnForMcu = mcusPerColumn * v.v;
+		const blocks = [];
 		
 		for (i = 0; i < blocksPerColumnForMcu; i++) {
-			let row = [];
+			const row = [];
 			for (j = 0; j < blocksPerLineForMcu; j++) {
 				row.push(new Int32Array(64));
 			}
@@ -684,29 +684,28 @@ function parseAppADOBE(arrAppData) {
 }
 
 function parseComponentData(buffer) {
-	let o = {};
-	let data = new Uint8Array(buffer);
-	
+	const o = {};
+	const quantizationTables = [];
+	const frames = [];
+	const huffmanTablesAC = [];
+	const huffmanTablesDC = [];
+	const data = new Uint8Array(buffer);
 	let offset = 0;
 	let frame;
 	let resetInterval;
-	let quantizationTables = [];
-	let frames = [];
-	let huffmanTablesAC = [];
-	let huffmanTablesDC = [];
 	let fileMarker;
 	let i;
 	let j;
 	
 	// if NOT assigned to a variable means skipping the data
 	function readUInt16() {
-		let value = getUInit16(data, offset);
+		const value = getUInit16(data, offset);
 		
 		offset += 2;
 		return value;
 	}
 	function readDataBlock() {
-		let arr = getDataBlock(data, offset);
+		const arr = getDataBlock(data, offset);
 		
 		offset += arr.length + 2;
 		
@@ -750,12 +749,12 @@ function parseComponentData(buffer) {
 			o.ADOBE = parseAppADOBE(readDataBlock());
 			break;
 		case JPG.DQT:
-			let quantizationTablesLength = readUInt16();
-			let quantizationTablesEnd = quantizationTablesLength + offset - 2;
+			const quantizationTablesLength = readUInt16();
+			const quantizationTablesEnd = quantizationTablesLength + offset - 2;
 			
 			while (offset < quantizationTablesEnd) {
-				let quantizationTableSpec = data[offset++];
-				let tableData = new Int32Array(64);
+				const quantizationTableSpec = data[offset++];
+				const tableData = new Int32Array(64);
 				if (bitShiftR(quantizationTableSpec, 4) === 0) { // 8 bit values
 					for (j = 0; j < 64; j++) {
 						tableData[dctZigZag[j]] = data[offset++];
@@ -785,19 +784,18 @@ function parseComponentData(buffer) {
 				componentsOrder: []
 			};
 			
-			let componentsCount = data[offset++];
+			const componentsCount = data[offset++];
 			let componentId;
 			
 			for (i = 0; i < componentsCount; i++) {
 				componentId = data[offset];
-				let h = bitShiftR(data[offset + 1], 4);
-				let v = bitAnd(data[offset + 1], 15);
-				let qId = data[offset + 2];
+				const h = bitShiftR(data[offset + 1], 4);
+				const v = bitAnd(data[offset + 1], 15);
+				const qId = data[offset + 2];
 				
 				frame.componentsOrder.push(componentId);
 				frame.components[componentId] = {
-					h: h,
-					v: v,
+					h, v,
 					quantizationIdx: qId
 				};
 				offset += 3;
@@ -806,17 +804,17 @@ function parseComponentData(buffer) {
 			frames.push(frame);
 			break;
 		case JPG.DHT:
-			let huffmanLength = readUInt16();
+			const huffmanLength = readUInt16();
 			for (i = 2; i < huffmanLength;) {
-				let huffmanTableSpec = data[offset++];
-				let codeLengths = new Uint8Array(16);
+				const huffmanTableSpec = data[offset++];
+				const codeLengths = new Uint8Array(16);
 				let codeLengthSum = 0;
 				
 				for (j = 0; j < 16; j++, offset++) {
 					codeLengthSum += (codeLengths[j] = data[offset]);
 				}
 				
-				let huffmanValues = new Uint8Array(codeLengthSum);
+				const huffmanValues = new Uint8Array(codeLengthSum);
 				for (j = 0; j < codeLengthSum; j++, offset++) {
 					huffmanValues[j] = data[offset];
 				}
@@ -833,22 +831,22 @@ function parseComponentData(buffer) {
 		case JPG.SOS: // FIXME performance bottleneck here
 			readUInt16();
 			
-			let selectorsCount = data[offset++];
-			let components = [];
+			const selectorsCount = data[offset++];
+			const components = [];
 			let component;
 			
 			for (i = 0; i < selectorsCount; i++) {
 				component = frame.components[data[offset++]];
-				let tableSpec = data[offset++];
+				const tableSpec = data[offset++];
 				component.huffmanTableDC = huffmanTablesDC[bitShiftR(tableSpec, 4)];
 				component.huffmanTableAC = huffmanTablesAC[bitAnd(tableSpec, 15)];
 				components.push(component);
 			}
 			
-			let spectralStart = data[offset++];
-			let spectralEnd = data[offset++];
-			let successiveApproximation = data[offset++];
-			let processed = decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, bitShiftR(successiveApproximation, 4), bitAnd(successiveApproximation, 15));
+			const spectralStart = data[offset++];
+			const spectralEnd = data[offset++];
+			const successiveApproximation = data[offset++];
+			const processed = decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, bitShiftR(successiveApproximation, 4), bitAnd(successiveApproximation, 15));
 			
 			offset += processed;
 			break;
@@ -879,7 +877,7 @@ function parseComponentData(buffer) {
 		width: frame.samplesPerLine,
 		height: frame.scanLines,
 		components: frame.componentsOrder.map(val => {
-			let com = frame.components[val];
+			const com = frame.components[val];
 			
 			return {
 				lines: buildComponentData(com),
@@ -891,9 +889,9 @@ function parseComponentData(buffer) {
 }
 
 function getMiddleData(componentData) {
-	let {ADOBE, components, width, height} = componentData;
-	let [component1, component2, component3, component4] = components;
-	let data = new Uint8Array(width * height * components.length);
+	const {ADOBE, components, width, height} = componentData;
+	const [component1, component2, component3, component4] = components;
+	const data = new Uint8Array(width * height * components.length);
 	let offset = 0;
 	let component1Line;
 	let component2Line;
@@ -1013,10 +1011,10 @@ function getMiddleData(componentData) {
 }
 
 export default buffer => {
-	let componentData = parseComponentData(buffer);
-	let {components, width, height} = componentData;
-	let data = new Buffer(width * height * 4);
-	let middleData = getMiddleData(componentData);
+	const componentData = parseComponentData(buffer);
+	const {components, width, height} = componentData;
+	const data = new Buffer(width * height * 4);
+	const middleData = getMiddleData(componentData);
 	let i = 0;
 	let j = 0;
 	let x;

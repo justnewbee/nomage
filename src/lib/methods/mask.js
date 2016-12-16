@@ -4,12 +4,12 @@
  * @param {Image} srcImg
  * @param {Integer} [x=1] the x position to mask
  * @param {Integer} [y=1] the y position to mask
- * @param {Integer} [srcX=1] the x position from which to mask
- * @param {Integer} [srcY=1] the y position from which to mask
- * @param {Integer} [srcW] the width to which to mask
- * @param {Integer} [srcH] the height to which to mask
+ * @param {Integer} [srcX1=1] the x position from which to mask
+ * @param {Integer} [srcY1=1] the y position from which to mask
+ * @param {Integer} [srcX2] the width to which to mask
+ * @param {Integer} [srcY2] the height to which to mask
  */
-export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.width, srcH = srcImg.height) {
+export default function(srcImg, x = 1, y = 1, srcX1 = 1, srcY1 = 1, srcX2 = srcImg.width, srcY2 = srcImg.height) {
 	x = Math.round(x);
 	y = Math.round(y);
 	
@@ -17,11 +17,11 @@ export default function(srcImg, x = 1, y = 1, srcX = 1, srcY = 1, srcW = srcImg.
 	const srcData = srcImg.data;
 	
 	srcImg._scan((idx, sx, sy) => {
-		const dstIdx = this._getPixelIndex(x + sx - srcX, y + sy - srcY);
+		const dstIdx = this._getPixelIndex(x + sx - srcX1, y + sy - srcY1);
 		const avg = (srcData[idx] + srcData[idx + 1] + srcData[idx + 2]) / 3;
 		
 		data[dstIdx + 3] *= avg / 255;
-	}, srcX, srcY, srcW, srcH);
+	}, srcX1, srcY1, srcX2, srcY2);
 	
 	return this;
 }

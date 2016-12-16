@@ -55,6 +55,14 @@ describe("nomage", function() {
 				img.mime.should.equal(what.MIME);
 				Buffer.isBuffer(img.data).should.equal(true);
 				img.data.length.should.equal(img.width * img.height * 4);
+				img.getPixelColorHex(img.width / 2, img.height / 2).should.belowOrEqual(0xffffffff);
+				
+				const rgba = img.getPixelColorRGBA(img.width, img.height);
+				rgba.should.have.keys("r", "g", "b", "a");
+				rgba.r.should.between(0, 255);
+				rgba.g.should.between(0, 255);
+				rgba.b.should.between(0, 255);
+				rgba.a.should.between(0, 255);
 			}).should.be.fulfilled();
 		}
 		

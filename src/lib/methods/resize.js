@@ -326,4 +326,4 @@ export default function(toWidth, toHeight) {
 	bitmap.height = toHeight;
 	
 	return this;
-};
+}

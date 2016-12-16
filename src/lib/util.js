@@ -64,12 +64,11 @@ export default {
 	 */
 	getRGB(color = [0, 0, 0]) {
 		if (Array.isArray(color)) {
-			let [r = 0, g = 0, b = 0] = color;
-			
+			const [r = 0, g = 0, b = 0] = color;
 			return [r, g, b];
 		}
 		
-		let {r, g, b} = tinyColor(color).toRgb();
+		const {r, g, b} = tinyColor(color).toRgb();
 		return [r, g, b];
 	}
 	

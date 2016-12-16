@@ -516,20 +516,19 @@ export default (bitmap, quality = 100) => {
 		const I16 = 16;
 		const I63 = 63;
 		const I64 = 64;
-		
-		let EOB = HTAC[0x00];
-		let M16zeroes = HTAC[0xF0];
-		let DU_DCT = fDCTQuantize(CDU, fdtbl);
+		const EOB = HTAC[0x00];
+		const M16zeroes = HTAC[0xF0];
+		const DU_DCT = fDCTQuantize(CDU, fdtbl);
 		let pos;
 		
 		// ZigZag reorder
 		for (let j = 0; j < I64; ++j) {
 			DU[ZIG_ZAG[j]] = DU_DCT[j];
 		}
-		let diff = DU[0] - DC;
+		const diff = DU[0] - DC;
 		DC = DU[0];
 		// Encode DC
-		if (diff == 0) {
+		if (diff === 0) {
 			writeBits(HTDC[0]); // diff might be 0
 		} else {
 			pos = 32767 + diff;

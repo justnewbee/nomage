@@ -288,4 +288,4 @@ export default function(buffer, withAlpha) {
 	return {
 		data, width, height
 	};
-};
+}
