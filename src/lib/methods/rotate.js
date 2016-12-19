@@ -109,27 +109,48 @@
 /**
  * Rotates the image clockwise by a number of degrees. By default the width and height of the image will be resized appropriately.
  */
-export default function() {
+export default function(deg = 0) {
+	deg = deg % 360; // limit within (-360, 360)
+	
+	if (!deg) {
+		return this;
+	}
+	if (deg < 0) { // change from anti-clockwise to clockwise
+		deg += 360;
+	}
+	
 	const {data, width, height} = this;
 	const buffer = new Buffer(data.length);
 	
 	let loopIndex = 0;
 	
-	this._scan("LR-BT", idx => {
-		buffer.writeUInt32BE(data.readUInt32BE(idx, true), loopIndex++ * 4, true);
-	});
-	
-	this._bitmap.data = new Buffer(buffer);
-	this._bitmap.width = height;
-	this._bitmap.height = width;
-	
-//	
-//	
-//	if (deg % 90 == 0 && mode !== false) {
-//		simpleRotate.call(this, deg);
-//	} else {
-//		advancedRotate.call(this, deg, mode);
-//	}
+	switch (deg) {
+	case 90:
+		this._scan("LR-BT", idx => {
+			buffer.writeUInt32BE(data.readUInt32BE(idx, true), loopIndex++ * 4, true);
+		});
+		
+		this._bitmap.data = new Buffer(buffer);
+		this._bitmap.width = height;
+		this._bitmap.height = width;
+		break;
+	case 180:
+		this._scan("BT-RL", idx => {
+			buffer.writeUInt32BE(data.readUInt32BE(idx, true), loopIndex++ * 4, true);
+		});
+		
+		this._bitmap.data = new Buffer(buffer);
+		break;
+	case 270:
+		this._scan("RL-TB", idx => {
+			buffer.writeUInt32BE(data.readUInt32BE(idx, true), loopIndex++ * 4, true);
+		});
+		
+		this._bitmap.data = new Buffer(buffer);
+		this._bitmap.width = height;
+		this._bitmap.height = width;
+		break;
+	}
 	
 	return this;
 }
