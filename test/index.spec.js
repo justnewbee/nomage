@@ -157,226 +157,226 @@ describe("nomage", function() {
 	
 	describe("flipping", () => {
 		describe("horizontal", () => {
-			it("bmp horizontal", testOpAndSaveGen("flip")(IMAGES.BMP));
-			it("jpg horizontal", testOpAndSaveGen("flip")(IMAGES.JPG));
-			it("png horizontal", testOpAndSaveGen("flip")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("flip")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("flip")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("flip")(IMAGES.PNG));
 		});
 		describe("vertical", () => {
-			it("bmp vertical", testOpAndSaveGen("flip", false, true)(IMAGES.BMP));
-			it("jpg vertical", testOpAndSaveGen("flip", false, true)(IMAGES.JPG));
-			it("png vertical", testOpAndSaveGen("flip", false, true)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("flip", false, true)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("flip", false, true)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("flip", false, true)(IMAGES.PNG));
 		});
 		describe("both", () => {
-			it("bmp both", testOpAndSaveGen("flip", true, true)(IMAGES.BMP));
-			it("jpg both", testOpAndSaveGen("flip", true, true)(IMAGES.JPG));
-			it("png both", testOpAndSaveGen("flip", true, true)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("flip", true, true)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("flip", true, true)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("flip", true, true)(IMAGES.PNG));
 		});
 	});
 	
 	describe("alpha-full", () => {
 		describe("opacity", () => {
-			it("bmp opacity", testOpAndSaveGen("opacity!png", 0.667)(IMAGES.BMP));
-			it("jpg opacity", testOpAndSaveGen("opacity!png", 0.667)(IMAGES.JPG));
-			it("png opacity", testOpAndSaveGen("opacity", 0.667)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("opacity!png", 0.667)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("opacity!png", 0.667)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("opacity", 0.667)(IMAGES.PNG));
 		});
 		describe("opaque", () => {
-			it("bmp opaque", testOpAndSaveGen("opaque")(IMAGES.BMP));
-			it("jpg opaque", testOpAndSaveGen("opaque")(IMAGES.JPG));
-			it("png opaque", testOpAndSaveGen("opaque")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("opaque")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("opaque")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("opaque")(IMAGES.PNG));
 		});
 	});
 	describe("alpha-partial", () => {
 		describe("opacity", () => {
-			it("bmp opacity", testOpAndSaveGen(true, "opacity!png", 0.3)(IMAGES.BMP));
-			it("jpg opacity", testOpAndSaveGen(true, "opacity!png", 0.3)(IMAGES.JPG));
-			it("png opacity", testOpAndSaveGen(true, "opacity", 0.3)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "opacity!png", 0.3)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "opacity!png", 0.3)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "opacity", 0.3)(IMAGES.PNG));
 		});
 		describe("opaque", () => {
-			it("bmp opaque", testOpAndSaveGen(true, "opaque")(IMAGES.BMP));
-			it("jpg opaque", testOpAndSaveGen(true, "opaque")(IMAGES.JPG));
-			it("png opaque", testOpAndSaveGen(true, "opaque")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "opaque")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "opaque")(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "opaque")(IMAGES.PNG));
 		});
 	});
 	
 	describe("color-full", () => {
 		describe("brightness lower", () => {
-			it("bmp brightness lower", testOpAndSaveGen("brightness", -0.6)(IMAGES.BMP));
-			it("jpg brightness lower", testOpAndSaveGen("brightness", -0.6)(IMAGES.JPG));
-			it("png brightness lower", testOpAndSaveGen("brightness", -0.6)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("brightness", -0.6)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("brightness", -0.6)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("brightness", -0.6)(IMAGES.PNG));
 		});
 		describe("brightness higher", () => {
-			it("bmp brightness higher", testOpAndSaveGen("brightness", 0.6)(IMAGES.BMP));
-			it("jpg brightness higher", testOpAndSaveGen("brightness", 0.6)(IMAGES.JPG));
-			it("png brightness higher", testOpAndSaveGen("brightness", 0.6)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("brightness", 0.6)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("brightness", 0.6)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("brightness", 0.6)(IMAGES.PNG));
 		});
 		describe("contrast lower", () => {
-			it("bmp contrast lower", testOpAndSaveGen("contrast", -0.5)(IMAGES.BMP));
-			it("jpg contrast lower", testOpAndSaveGen("contrast", -0.5)(IMAGES.JPG));
-			it("png contrast lower", testOpAndSaveGen("contrast", -0.5)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("contrast", -0.5)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("contrast", -0.5)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("contrast", -0.5)(IMAGES.PNG));
 		});
 		describe("contrast higher", () => {
-			it("bmp contrast higher", testOpAndSaveGen("contrast", 0.5)(IMAGES.BMP));
-			it("jpg contrast higher", testOpAndSaveGen("contrast", 0.5)(IMAGES.JPG));
-			it("png contrast higher", testOpAndSaveGen("contrast", 0.5)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("contrast", 0.5)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("contrast", 0.5)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("contrast", 0.5)(IMAGES.PNG));
 		});
 		describe("mix", () => {
-			it("bmp mix", testOpAndSaveGen("mix", "red")(IMAGES.BMP));
-			it("jpg mix", testOpAndSaveGen("mix", "red")(IMAGES.JPG));
-			it("png mix", testOpAndSaveGen("mix", "red")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("mix", "red")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("mix", "red")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("mix", "red")(IMAGES.PNG));
 		});
 		describe("tint", () => {
-			it("bmp tint", testOpAndSaveGen("tint", 33)(IMAGES.BMP));
-			it("jpg tint", testOpAndSaveGen("tint", 33)(IMAGES.JPG));
-			it("png tint", testOpAndSaveGen("tint", 33)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("tint", 33)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("tint", 33)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("tint", 33)(IMAGES.PNG));
 		});
 		describe("shade", () => {
-			it("bmp shade", testOpAndSaveGen("shade", 33)(IMAGES.BMP));
-			it("jpg shade", testOpAndSaveGen("shade", 33)(IMAGES.JPG));
-			it("png shade", testOpAndSaveGen("shade", 33)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("shade", 33)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("shade", 33)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("shade", 33)(IMAGES.PNG));
 		});
 		describe("xor", () => {
-			it("bmp xor", testOpAndSaveGen("xor", "#123456")(IMAGES.BMP));
-			it("jpg xor", testOpAndSaveGen("xor", "#123456")(IMAGES.JPG));
-			it("png xor", testOpAndSaveGen("xor", "#123456")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("xor", "#123456")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("xor", "#123456")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("xor", "#123456")(IMAGES.PNG));
 		});
 		describe("red", () => {
-			it("bmp red", testOpAndSaveGen("red", 125)(IMAGES.BMP));
-			it("jpg red", testOpAndSaveGen("red", 125)(IMAGES.JPG));
-			it("png red", testOpAndSaveGen("red", 125)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("red", 125)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("red", 125)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("red", 125)(IMAGES.PNG));
 		});
 		describe("green", () => {
-			it("bmp green", testOpAndSaveGen("green", 156)(IMAGES.BMP));
-			it("jpg green", testOpAndSaveGen("green", 156)(IMAGES.JPG));
-			it("png green", testOpAndSaveGen("green", 156)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("green", 156)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("green", 156)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("green", 156)(IMAGES.PNG));
 		});
 		describe("blue", () => {
-			it("bmp blue", testOpAndSaveGen("blue", 200)(IMAGES.BMP));
-			it("jpg blue", testOpAndSaveGen("blue", 200)(IMAGES.JPG));
-			it("png blue", testOpAndSaveGen("blue", 200)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("blue", 200)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("blue", 200)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("blue", 200)(IMAGES.PNG));
 		});
 		describe("spin-SLOW", () => {
-			it("bmp spin", testOpAndSaveGen("spin", 234)(IMAGES.BMP));
-			it("jpg spin", testOpAndSaveGen("spin", 234)(IMAGES.JPG));
-			it("png spin", testOpAndSaveGen("spin", 234)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("spin", 234)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("spin", 234)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("spin", 234)(IMAGES.PNG));
 		});
 	});
 	
 	describe("color-partial", () => {
 		describe("brightness lower", () => {
-			it("bmp brightness lower", testOpAndSaveGen(true, "brightness", -0.5)(IMAGES.BMP));
-			it("jpg brightness lower", testOpAndSaveGen(true, "brightness", -0.5)(IMAGES.JPG));
-			it("png brightness lower", testOpAndSaveGen(true, "brightness", -0.5)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "brightness", -0.5)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "brightness", -0.5)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "brightness", -0.5)(IMAGES.PNG));
 		});
 		describe("brightness higher", () => {
-			it("bmp brightness higher", testOpAndSaveGen(true, "brightness", 0.75)(IMAGES.BMP));
-			it("jpg brightness higher", testOpAndSaveGen(true, "brightness", 0.75)(IMAGES.JPG));
-			it("png brightness higher", testOpAndSaveGen(true, "brightness", 0.75)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "brightness", 0.75)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "brightness", 0.75)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "brightness", 0.75)(IMAGES.PNG));
 		});
 		describe("contrast lower", () => {
-			it("bmp contrast lower", testOpAndSaveGen(true, "contrast", -0.5)(IMAGES.BMP));
-			it("jpg contrast lower", testOpAndSaveGen(true, "contrast", -0.5)(IMAGES.JPG));
-			it("png contrast lower", testOpAndSaveGen(true, "contrast", -0.5)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "contrast", -0.5)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "contrast", -0.5)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "contrast", -0.5)(IMAGES.PNG));
 		});
 		describe("contrast higher", () => {
-			it("bmp contrast higher", testOpAndSaveGen(true, "contrast", 0.8)(IMAGES.BMP));
-			it("jpg contrast higher", testOpAndSaveGen(true, "contrast", 0.8)(IMAGES.JPG));
-			it("png contrast higher", testOpAndSaveGen(true, "contrast", 0.8)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "contrast", 0.8)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "contrast", 0.8)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "contrast", 0.8)(IMAGES.PNG));
 		});
 		describe("mix", () => {
-			it("bmp mix", testOpAndSaveGen(true, "mix", [50, 75, 150], 33)(IMAGES.BMP));
-			it("jpg mix", testOpAndSaveGen(true, "mix", [50, 75, 150], 33)(IMAGES.JPG));
-			it("png mix", testOpAndSaveGen(true, "mix", [50, 75, 150], 33)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "mix", [50, 75, 150], 33)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "mix", [50, 75, 150], 33)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "mix", [50, 75, 150], 33)(IMAGES.PNG));
 		});
 		describe("tint", () => {
-			it("bmp tint", testOpAndSaveGen(true, "tint", 25)(IMAGES.BMP));
-			it("jpg tint", testOpAndSaveGen(true, "tint", 25)(IMAGES.JPG));
-			it("png tint", testOpAndSaveGen(true, "tint", 25)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "tint", 25)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "tint", 25)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "tint", 25)(IMAGES.PNG));
 		});
 		describe("shade", () => {
-			it("bmp shade", testOpAndSaveGen(true, "shade", 47)(IMAGES.BMP));
-			it("jpg shade", testOpAndSaveGen(true, "shade", 47)(IMAGES.JPG));
-			it("png shade", testOpAndSaveGen(true, "shade", 47)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "shade", 47)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "shade", 47)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "shade", 47)(IMAGES.PNG));
 		});
 		describe("xor", () => {
-			it("bmp xor", testOpAndSaveGen(true, "xor", "#fc9630")(IMAGES.BMP));
-			it("jpg xor", testOpAndSaveGen(true, "xor", "#fc9630")(IMAGES.JPG));
-			it("png xor", testOpAndSaveGen(true, "xor", "#fc9630")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "xor", "#fc9630")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "xor", "#fc9630")(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "xor", "#fc9630")(IMAGES.PNG));
 		});
 		describe("red", () => {
-			it("bmp red", testOpAndSaveGen(true, "red", 125)(IMAGES.BMP));
-			it("jpg red", testOpAndSaveGen(true, "red", 125)(IMAGES.JPG));
-			it("png red", testOpAndSaveGen(true, "red", 125)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "red", 125)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "red", 125)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "red", 125)(IMAGES.PNG));
 		});
 		describe("green", () => {
-			it("bmp green", testOpAndSaveGen(true, "green", 200)(IMAGES.BMP));
-			it("jpg green", testOpAndSaveGen(true, "green", 200)(IMAGES.JPG));
-			it("png green", testOpAndSaveGen(true, "green", 200)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "green", 200)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "green", 200)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "green", 200)(IMAGES.PNG));
 		});
 		describe("blue", () => {
-			it("bmp blue", testOpAndSaveGen(true, "blue", 99)(IMAGES.BMP));
-			it("jpg blue", testOpAndSaveGen(true, "blue", 99)(IMAGES.JPG));
-			it("png blue", testOpAndSaveGen(true, "blue", 99)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "blue", 99)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "blue", 99)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "blue", 99)(IMAGES.PNG));
 		});
 		describe("spin-SLOW", () => {
-			it("bmp spin", testOpAndSaveGen(true, "spin", 123)(IMAGES.BMP));
-			it("jpg spin", testOpAndSaveGen(true, "spin", 123)(IMAGES.JPG));
-			it("png spin", testOpAndSaveGen(true, "spin", 123)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "spin", 123)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "spin", 123)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "spin", 123)(IMAGES.PNG));
 		});
 	});
 	
 	describe("filters-full", () => {
 		describe("invert()", () => {
-			it("bmp invert", testOpAndSaveGen("invert")(IMAGES.BMP));
-			it("jpg invert", testOpAndSaveGen("invert")(IMAGES.JPG));
-			it("png invert", testOpAndSaveGen("invert")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("invert")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("invert")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("invert")(IMAGES.PNG));
 		});
 		describe("greyscale()", () => {
-			it("bmp greyscale", testOpAndSaveGen("greyscale")(IMAGES.BMP));
-			it("jpg greyscale", testOpAndSaveGen("greyscale")(IMAGES.JPG));
-			it("png greyscale", testOpAndSaveGen("greyscale")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("greyscale")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("greyscale")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("greyscale")(IMAGES.PNG));
 		});
 		describe("sepia()", () => {
-			it("bmp sepia", testOpAndSaveGen("sepia")(IMAGES.BMP));
-			it("jpg sepia", testOpAndSaveGen("sepia")(IMAGES.JPG));
-			it("png sepia", testOpAndSaveGen("sepia")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("sepia")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("sepia")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("sepia")(IMAGES.PNG));
 		});
 		describe("dither()", () => {
-			it("bmp dither", testOpAndSaveGen("dither")(IMAGES.BMP));
-			it("jpg dither", testOpAndSaveGen("dither")(IMAGES.JPG));
-			it("png dither", testOpAndSaveGen("dither")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("dither")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("dither")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("dither")(IMAGES.PNG));
 		});
 		describe("posterize(10)", () => {
-			it("bmp posterize", testOpAndSaveGen("posterize", 10)(IMAGES.BMP));
-			it("jpg posterize", testOpAndSaveGen("posterize", 10)(IMAGES.JPG));
-			it("png posterize", testOpAndSaveGen("posterize", 10)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("posterize", 10)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("posterize", 10)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("posterize", 10)(IMAGES.PNG));
 		});
 	});
 	
 	describe("filters-partial", () => {
 		describe("invert(x1, y1, x2, y2)", () => {
-			it("bmp invert", testOpAndSaveGen(true, "invert")(IMAGES.BMP));
-			it("jpg invert", testOpAndSaveGen(true, "invert")(IMAGES.JPG));
-			it("png invert", testOpAndSaveGen(true, "invert")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "invert")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "invert")(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "invert")(IMAGES.PNG));
 		});
 		describe("greyscale(x1, y1, x2, y2)", () => {
-			it("bmp greyscale", testOpAndSaveGen(true, "greyscale")(IMAGES.BMP));
-			it("jpg greyscale", testOpAndSaveGen(true, "greyscale")(IMAGES.JPG));
-			it("png greyscale", testOpAndSaveGen(true, "greyscale")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "greyscale")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "greyscale")(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "greyscale")(IMAGES.PNG));
 		});
 		describe("sepia(x1, y1, x2, y2)", () => {
-			it("bmp sepia", testOpAndSaveGen(true, "sepia")(IMAGES.BMP));
-			it("jpg sepia", testOpAndSaveGen(true, "sepia")(IMAGES.JPG));
-			it("png sepia", testOpAndSaveGen(true, "sepia")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "sepia")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "sepia")(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "sepia")(IMAGES.PNG));
 		});
 		describe("dither(x1, y1, x2, y2)", () => {
-			it("bmp dither", testOpAndSaveGen(true, "dither")(IMAGES.BMP));
-			it("jpg dither", testOpAndSaveGen(true, "dither")(IMAGES.JPG));
-			it("png dither", testOpAndSaveGen(true, "dither")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "dither")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "dither")(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "dither")(IMAGES.PNG));
 		});
 		describe("posterize(5, x1, y1, x2, y2)", () => {
-			it("bmp posterize", testOpAndSaveGen(true, "posterize", 5)(IMAGES.BMP));
-			it("jpg posterize", testOpAndSaveGen(true, "posterize", 5)(IMAGES.JPG));
-			it("png posterize", testOpAndSaveGen(true, "posterize", 5)(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen(true, "posterize", 5)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen(true, "posterize", 5)(IMAGES.JPG));
+			it("png", testOpAndSaveGen(true, "posterize", 5)(IMAGES.PNG));
 		});
 	});
 	
@@ -455,14 +455,22 @@ describe("nomage", function() {
 				savedImg.height.should.equal(y2 - y1 + 1);
 			}
 			
-			it("bmp crop", testOpAndSaveGen(true, "crop")(IMAGES.BMP, testOnSaved));
-			it("jpg crop", testOpAndSaveGen(true, "crop")(IMAGES.JPG, testOnSaved));
-			it("png crop", testOpAndSaveGen(true, "crop")(IMAGES.PNG, testOnSaved));
+			it("bmp", testOpAndSaveGen(true, "crop")(IMAGES.BMP, testOnSaved));
+			it("jpg", testOpAndSaveGen(true, "crop")(IMAGES.JPG, testOnSaved));
+			it("png", testOpAndSaveGen(true, "crop")(IMAGES.PNG, testOnSaved));
 		});
 		describe("resize", () => {
-			it("bmp resize", testOpAndSaveGen("resize", "175%", "100%")(IMAGES.BMP));
-			it("jpg resize", testOpAndSaveGen("resize", "85%")(IMAGES.JPG));
-			it("png resize", testOpAndSaveGen("resize", "50%", "100%")(IMAGES.PNG));
+			it("bmp", testOpAndSaveGen("resize", "175%", "100%")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("resize", "85%")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("resize", "50%", "100%")(IMAGES.PNG));
+		});
+	});
+	
+	describe("rotate", () => {
+		describe("rotate-90", () => {
+			it("bmp", testOpAndSaveGen("rotate")(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("rotate")(IMAGES.JPG));
+			it("png", testOpAndSaveGen("rotate")(IMAGES.PNG));
 		});
 	});
 });

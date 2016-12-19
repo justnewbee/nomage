@@ -153,6 +153,13 @@ class Image {
 			 * START (x1, y1) >>>>>>>>>>>>
 			 *  ⤷ ...
 			 *  ⤷ >>>>>>>>>>> (x2, y2) END
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 1 2 3 4, 5 6 7 8
 			 */
 			t2b(y => l2r(x => scanFn(x, y)));
 			break;
@@ -164,6 +171,13 @@ class Image {
 			 * <<<<<<<<<<<<< (x2, y1) START
 			 *                       ... ⤶
 			 * END (x1, y2) <<<<<<<<<<<< ⤶
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 4 3 2 1, 8 7 6 5
 			 */
 			t2b(y => r2l(x => scanFn(x, y)));
 			break;
@@ -175,6 +189,13 @@ class Image {
 			 * ↱ >>>>>>>>>> (x2, y1) END
 			 * ↱...
 			 * START (x1, y2) >>>>>>>>>>>
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 5 6 7 8, 1 2 3 4
 			 */
 			b2t(y => l2r(x => scanFn(x, y)));
 			break;
@@ -186,6 +207,13 @@ class Image {
 			 * END (x1, y2) <<<<<<<<<<<< ↰
 			 *                       ... ↰
 			 * <<<<<<<<<<<<< (x2, y1) START
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 8 7 6 5, 4 3 2 1
 			 */
 			b2t(y => r2l(x => scanFn(x, y)));
 			break;
@@ -200,6 +228,13 @@ class Image {
 			 *   .            .       .
 			 *   ⬇           ⬇      ⬇
 			 *   ⬇...        ⬇  (x2, y1) END
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 1 5, 2 6, 3 7, 4 8
 			 */
 			l2r(x => t2b(y => scanFn(x, y)));
 			break;
@@ -213,6 +248,13 @@ class Image {
 			 *   .             .     .
 			 *   ⬆            ⬆    ⬆
 			 * START (x1, y2) ︎︎⤴... ⤴
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 5 1, 6 2, 7 3, 8 4
 			 */
 			l2r(x => b2t(y => scanFn(x, y)));
 			break;
@@ -226,6 +268,13 @@ class Image {
 			 *  .           ... .     .
 			 *  ⬇          ... ⬇    ⬇
 			 * (x1, y2) END ... ⬇    ⬇
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 4 8, 3 7, 2 6, 1 5
 			 */
 			r2l(x => t2b(y => scanFn(x, y)));
 			break;
@@ -239,6 +288,13 @@ class Image {
 			 *  .                 .       .
 			 *  ⬆                ⬆      ⬆
 			 *  ︎︎↻            ... ↻ (x2, y2) START
+			 * 
+			 * e.g.
+			 * -------
+			 * 1 2 3 4
+			 * 5 6 7 8
+			 * -------
+			 * the scan sequence will be: 8 4, 7 3, 6 2, 5 1
 			 */
 			r2l(x => b2t(y => scanFn(x, y)));
 			break;
