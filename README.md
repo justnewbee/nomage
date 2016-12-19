@@ -4,6 +4,7 @@ node-image
 # ABOUT DEV
 
 ```bash
+npm install
 npm start
 ```
 

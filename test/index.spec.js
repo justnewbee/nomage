@@ -59,10 +59,10 @@ describe("nomage", function() {
 				
 				const rgba = img.getPixelColorRGBA(img.width, img.height);
 				rgba.should.have.keys("r", "g", "b", "a");
-				rgba.r.should.between(0, 255);
-				rgba.g.should.between(0, 255);
-				rgba.b.should.between(0, 255);
-				rgba.a.should.between(0, 255);
+				rgba.r.should.be.within(0, 255);
+				rgba.g.should.be.within(0, 255);
+				rgba.b.should.be.within(0, 255);
+				rgba.a.should.be.within(0, 255);
 			}).should.be.fulfilled();
 		}
 		

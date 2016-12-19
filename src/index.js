@@ -104,13 +104,15 @@ class Image {
 	/**
 	 * scan through a region of the bitmap, calling a function for each pixel
 	 * NOTE (x1, y1) and (x2, y2) ranges start from 1
-	 * @param {Function} fn a function to call on even pixels; the (x, y) position of the pixel
-	 * @param {Integer} [x1=1] the x coordinate to begin the scan at
-	 * @param {Integer} [y1=1] the y coordinate to begin the scan at
-	 * @param {Integer} [x2=this.width] the width of the scan region
-	 * @param {Integer} [y2=this.height] the height of the scan region
 	 */
-	_scan(fn, x1, y1, x2, y2) {
+	_scan(...args) {
+		// _scan(fn) - scan the whole area in default mode
+		// _scan(mode, fn) - scan the whole area in a specified mode
+		// _scan(fn, x1, y1, x2, y2) - scan an area
+		// _scan(mode, fn, x1, y1, x2, y2) - scan an area in a specified mode
+		const mode = typeof args[0] === "string" ? args.shift() : "TB-LR";
+		const fn = args.shift();
+		let [x1, y1, x2, y2] = args;
 		const range = this._getRange(x1, y1, x2, y2);
 		
 		if (!range) {
@@ -119,10 +121,129 @@ class Image {
 		
 		[x1, y1, x2, y2] = range;
 		
-		for (let y = y1; y <= y2; y++) {
-			for (let x = x1; x <= x2; x++) {
-				fn(this._getPixelIndex(x, y), x, y);
+		function t2b(callback) {
+			for (let y = y1; y <= y2; y++) {
+				callback(y);
 			}
+		}
+		function b2t(callback) {
+			for (let y = y2; y >= y1; y--) {
+				callback(y);
+			}
+		}
+		function l2r(callback) {
+			for (let x = x1; x <= x2; x++) {
+				callback(x);
+			}
+		}
+		function r2l(callback) {
+			for (let x = x2; x >= x1; x--) {
+				callback(x);
+			}
+		}
+		const scanFn = (x, y) => fn(this._getPixelIndex(x, y), x, y);
+		
+		switch (mode) {
+		// horizontal scan
+		case "TB-LR":
+			/* 
+			 * outer (big) loop: TOP to BOTTOM
+			 * inner {small} loop: LEFT to RIGHT
+			 *
+			 * START (x1, y1) >>>>>>>>>>>>
+			 *  ⤷ ...
+			 *  ⤷ >>>>>>>>>>> (x2, y2) END
+			 */
+			t2b(y => l2r(x => scanFn(x, y)));
+			break;
+		case "TB-RL":
+			/*
+			 * outer (big) loop: TOP to BOTTOM
+			 * inner {small} loop: RIGHT to LEFT
+			 * 
+			 * <<<<<<<<<<<<< (x2, y1) START
+			 *                       ... ⤶
+			 * END (x1, y2) <<<<<<<<<<<< ⤶
+			 */
+			t2b(y => r2l(x => scanFn(x, y)));
+			break;
+		case "BT-LR":
+			/*
+			 * outer (big) loop: BOTTOM to TOP
+			 * inner {small} loop: LEFT to RIGHT
+			 * 
+			 * ↱ >>>>>>>>>> (x2, y1) END
+			 * ↱...
+			 * START (x1, y2) >>>>>>>>>>>
+			 */
+			b2t(y => l2r(x => scanFn(x, y)));
+			break;
+		case "BT-RL":
+			/*
+			 * outer (big) loop: BOTTOM to TOP
+			 * inner {small} loop: RIGHT to LEFT
+			 * 
+			 * END (x1, y2) <<<<<<<<<<<< ↰
+			 *                       ... ↰
+			 * <<<<<<<<<<<<< (x2, y1) START
+			 */
+			b2t(y => r2l(x => scanFn(x, y)));
+			break;
+		// vertical scan
+		case "LR-TB":
+			/*
+			 * outer (big) loop: LEFT to RIGHT
+			 * inner {small} loop: TOP to BOTTOM
+			 * 
+			 * START (x1, y1) ↴ .... ↴
+			 *   ⬇           ⬇      ⬇
+			 *   .            .       .
+			 *   ⬇           ⬇      ⬇
+			 *   ⬇...        ⬇  (x2, y1) END
+			 */
+			l2r(x => t2b(y => scanFn(x, y)));
+			break;
+		case "LR-BT":
+			/*
+			 * outer (big) loop: LEFT to RIGHT
+			 * inner {small} loop: BOTTOM to TOP
+			 * 
+			 *   ⬆ ....       ⬆ (x2, y1) END
+			 *   ⬆            ⬆    ⬆
+			 *   .             .     .
+			 *   ⬆            ⬆    ⬆
+			 * START (x1, y2) ︎︎⤴... ⤴
+			 */
+			l2r(x => b2t(y => scanFn(x, y)));
+			break;
+		case "RL-TB":
+			/*
+			 * outer (big) loop: RIGHT to LEFT
+			 * inner {small} loop: TOP to BOTTOM
+			 * 
+			 *  ⤹....      ... ⤹  START (x2, y1)
+			 *  ⬇          ... ⬇    ⬇
+			 *  .           ... .     .
+			 *  ⬇          ... ⬇    ⬇
+			 * (x1, y2) END ... ⬇    ⬇
+			 */
+			r2l(x => t2b(y => scanFn(x, y)));
+			break;
+		case "RL-BT":
+			/*
+			 * outer (big) loop: RIGHT to LEFT
+			 * inner {small} loop: BOTTOM to TOP
+			 * 
+			 * START (x1, y1) ︎... ⬆      ⬆
+			 *  ⬆                ⬆      ⬆
+			 *  .                 .       .
+			 *  ⬆                ⬆      ⬆
+			 *  ︎︎↻            ... ↻ (x2, y2) START
+			 */
+			r2l(x => b2t(y => scanFn(x, y)));
+			break;
+		default:
+			throw new Error(`scan mode "${mode}" not supported`);
 		}
 		
 		return this;
