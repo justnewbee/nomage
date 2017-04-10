@@ -1,12 +1,12 @@
 /**
  * composites a source image over to this image respecting alpha channels
  * @param {Image} srcImg
- * @param {Integer} [x=1] the x position to compose
- * @param {Integer} [y=1] the y position to compose
- * @param {Integer} [srcX1=1] the x position from which to compose
- * @param {Integer} [srcY1=1] the y position from which to compose
- * @param {Integer} [srcX2] the width to which to compose
- * @param {Integer} [srcY2] the height to which to compose
+ * @param {int} [x=1] the x position to compose
+ * @param {int} [y=1] the y position to compose
+ * @param {int} [srcX1=1] the x position from which to compose
+ * @param {int} [srcY1=1] the y position from which to compose
+ * @param {int} [srcX2] the width to which to compose
+ * @param {int} [srcY2] the height to which to compose
  */
 export default function(srcImg, x = 1, y = 1, srcX1 = 1, srcY1 = 1, srcX2 = srcImg.width, srcY2 = srcImg.height) {
 	x = Math.round(x);
@@ -30,11 +30,6 @@ export default function(srcImg, x = 1, y = 1, srcX1 = 1, srcY1 = 1, srcX2 = srcI
 		const fgB = srcData[idx + 2] / 255;
 		const fgA = srcData[idx + 3] / 255;
 		const a = bgA + fgA - bgA * fgA;
-		
-		
-		fgR * fgA + bgR * bgA -  bgR * bgA * fgA
-		
-		
 		
 		data[dstIdx] = (fgR * fgA + bgR * bgA * (1 - fgA)) / a * 255;
 		data[dstIdx + 1] = (fgG * fgA + bgG * bgA * (1 - fgA)) / a * 255;

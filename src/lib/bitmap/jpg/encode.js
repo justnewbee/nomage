@@ -85,9 +85,9 @@ const STD_AC_CHROMINANCE_VALUES = [
 ];
 
 function computeHuffmanTbl(nrCodes, stdTable) {
+	const huffTable = [];
 	let codeValue = 0;
 	let posInTable = 0;
-	let huffTable = [];
 	
 	for (let k = 1; k <= 16; k++) {
 		for (let j = 1; j <= nrCodes[k]; j++) {
@@ -108,7 +108,7 @@ const UVDC_HT = computeHuffmanTbl(STD_DC_CHROMINANCE_NR_CODES, STD_DC_CHROMINANC
 const YAC_HT = computeHuffmanTbl(STD_AC_LUMINANCE_NR_CODES, STD_AC_LUMINANCE_VALUES);
 const UVAC_HT = computeHuffmanTbl(STD_AC_CHROMINANCE_NR_CODES, STD_AC_CHROMINANCE_VALUES);
 const RGB_YUV_TABLE = (() => {
-	let table = new Array(2048);
+	const table = new Array(2048);
 	
 	for (let i = 0; i < 256; i++) {
 		table[i] = 19595 * i;
@@ -124,8 +124,8 @@ const RGB_YUV_TABLE = (() => {
 	return table;
 })();
 const [CATEGORY, BIT_CODE] = (() => {
-	let category = new Array(65535);
-	let bitcode = new Array(65535);
+	const category = new Array(65535);
+	const bitcode = new Array(65535);
 	
 	let nrLower = 1;
 	let nrUpper = 2;
@@ -159,7 +159,7 @@ const AASF = [
 
 // DCT & quantization core
 function fDCTQuantize(dataArr, fdtbl) {
-	let outputfDCTQuant = new Array(64);
+	const outputfDCTQuant = new Array(64);
 	let d0;
 	let d1;
 	let d2;
@@ -185,19 +185,19 @@ function fDCTQuantize(dataArr, fdtbl) {
 		d6 = dataArr[dataOff + 6];
 		d7 = dataArr[dataOff + 7];
 		
-		let tmp0 = d0 + d7;
-		let tmp7 = d0 - d7;
-		let tmp1 = d1 + d6;
-		let tmp6 = d1 - d6;
-		let tmp2 = d2 + d5;
-		let tmp5 = d2 - d5;
-		let tmp3 = d3 + d4;
-		let tmp4 = d3 - d4;
+		const tmp0 = d0 + d7;
+		const tmp7 = d0 - d7;
+		const tmp1 = d1 + d6;
+		const tmp6 = d1 - d6;
+		const tmp2 = d2 + d5;
+		const tmp5 = d2 - d5;
+		const tmp3 = d3 + d4;
+		const tmp4 = d3 - d4;
 		
 		/* Even part */
 		let tmp10 = tmp0 + tmp3;
 		/* phase 2 */
-		let tmp13 = tmp0 - tmp3;
+		const tmp13 = tmp0 - tmp3;
 		let tmp11 = tmp1 + tmp2;
 		let tmp12 = tmp1 - tmp2;
 		
@@ -205,7 +205,7 @@ function fDCTQuantize(dataArr, fdtbl) {
 		/* phase 3 */
 		dataArr[dataOff + 4] = tmp10 - tmp11;
 		
-		let z1 = (tmp12 + tmp13) * 0.707106781;
+		const z1 = (tmp12 + tmp13) * 0.707106781;
 		/* c4 */
 		dataArr[dataOff + 2] = tmp13 + z1;
 		/* phase 5 */
@@ -218,18 +218,18 @@ function fDCTQuantize(dataArr, fdtbl) {
 		tmp12 = tmp6 + tmp7;
 		
 		/* The rotator is modified from fig 4-8 to avoid extra negations. */
-		let z5 = (tmp10 - tmp12) * 0.382683433;
+		const z5 = (tmp10 - tmp12) * 0.382683433;
 		/* c6 */
-		let z2 = 0.541196100 * tmp10 + z5;
+		const z2 = 0.541196100 * tmp10 + z5;
 		/* c2-c6 */
-		let z4 = 1.306562965 * tmp12 + z5;
+		const z4 = 1.306562965 * tmp12 + z5;
 		/* c2+c6 */
-		let z3 = tmp11 * 0.707106781;
+		const z3 = tmp11 * 0.707106781;
 		/* c4 */
 		
-		let z11 = tmp7 + z3;
+		const z11 = tmp7 + z3;
 		/* phase 5 */
-		let z13 = tmp7 - z3;
+		const z13 = tmp7 - z3;
 		
 		dataArr[dataOff + 5] = z13 + z2;
 		/* phase 6 */
@@ -253,19 +253,19 @@ function fDCTQuantize(dataArr, fdtbl) {
 		d6 = dataArr[dataOff + 48];
 		d7 = dataArr[dataOff + 56];
 		
-		let tmp0p2 = d0 + d7;
-		let tmp7p2 = d0 - d7;
-		let tmp1p2 = d1 + d6;
-		let tmp6p2 = d1 - d6;
-		let tmp2p2 = d2 + d5;
-		let tmp5p2 = d2 - d5;
-		let tmp3p2 = d3 + d4;
-		let tmp4p2 = d3 - d4;
+		const tmp0p2 = d0 + d7;
+		const tmp7p2 = d0 - d7;
+		const tmp1p2 = d1 + d6;
+		const tmp6p2 = d1 - d6;
+		const tmp2p2 = d2 + d5;
+		const tmp5p2 = d2 - d5;
+		const tmp3p2 = d3 + d4;
+		const tmp4p2 = d3 - d4;
 		
 		/* Even part */
 		let tmp10p2 = tmp0p2 + tmp3p2;
 		/* phase 2 */
-		let tmp13p2 = tmp0p2 - tmp3p2;
+		const tmp13p2 = tmp0p2 - tmp3p2;
 		let tmp11p2 = tmp1p2 + tmp2p2;
 		let tmp12p2 = tmp1p2 - tmp2p2;
 		
@@ -273,7 +273,7 @@ function fDCTQuantize(dataArr, fdtbl) {
 		/* phase 3 */
 		dataArr[dataOff + 32] = tmp10p2 - tmp11p2;
 		
-		let z1p2 = (tmp12p2 + tmp13p2) * 0.707106781;
+		const z1p2 = (tmp12p2 + tmp13p2) * 0.707106781;
 		/* c4 */
 		dataArr[dataOff + 16] = tmp13p2 + z1p2;
 		/* phase 5 */
@@ -286,18 +286,18 @@ function fDCTQuantize(dataArr, fdtbl) {
 		tmp12p2 = tmp6p2 + tmp7p2;
 		
 		/* The rotator is modified from fig 4-8 to avoid extra negations. */
-		let z5p2 = (tmp10p2 - tmp12p2) * 0.382683433;
+		const z5p2 = (tmp10p2 - tmp12p2) * 0.382683433;
 		/* c6 */
-		let z2p2 = 0.541196100 * tmp10p2 + z5p2;
+		const z2p2 = 0.541196100 * tmp10p2 + z5p2;
 		/* c2-c6 */
-		let z4p2 = 1.306562965 * tmp12p2 + z5p2;
+		const z4p2 = 1.306562965 * tmp12p2 + z5p2;
 		/* c2+c6 */
-		let z3p2 = tmp11p2 * 0.707106781;
+		const z3p2 = tmp11p2 * 0.707106781;
 		/* c4 */
 		
-		let z11p2 = tmp7p2 + z3p2;
+		const z11p2 = tmp7p2 + z3p2;
 		/* phase 5 */
-		let z13p2 = tmp7p2 - z3p2;
+		const z13p2 = tmp7p2 - z3p2;
 		
 		dataArr[dataOff + 40] = z13p2 + z2p2;
 		/* phase 6 */
@@ -370,17 +370,17 @@ export default (bitmap, quality = 100) => {
 	const {data, width, height} = bitmap;
 	const [yTable, uvTable, fdYTable, fdUvTable] = getQuantizeTables(quality < 50 ? Math.floor(5000 / quality) : Math.floor(200 - quality * 2));
 	
-	let DU = new Array(64);
-	let YDU = new Array(64);
-	let UDU = new Array(64);
-	let VDU = new Array(64);
-	let byteOut = [];
+	const DU = new Array(64);
+	const YDU = new Array(64);
+	const UDU = new Array(64);
+	const VDU = new Array(64);
+	const byteOut = [];
 	let byteNew = 0;
 	let bytePos = 7;
 	
 	// IO functions
 	function writeBits(bs) {
-		let value = bs[0];
+		const value = bs[0];
 		let posval = bs[1] - 1;
 		
 		while (posval >= 0) {
@@ -549,7 +549,7 @@ export default (bitmap, quality = 100) => {
 		let len;
 		
 		while (i <= end0pos) {
-			let startPos = i;
+			const startPos = i;
 			for (; DU[i] === 0 && i <= end0pos; ++i) {}
 			
 			let nrZeroes = i - startPos;
@@ -581,10 +581,10 @@ export default (bitmap, quality = 100) => {
 	writeSOS();
 	
 	// Encode 8x8 macroblocks
+	const quadWidth = width * 4;
 	let DCY = 0;
 	let DCU = 0;
 	let DCV = 0;
-	let quadWidth = width * 4;
 	let x;
 	let y = 0;
 	let r;
@@ -644,7 +644,7 @@ export default (bitmap, quality = 100) => {
 	
 	// Do the bit alignment of the EOI marker
 	if (bytePos >= 0) {
-		let fillBits = [];
+		const fillBits = [];
 		fillBits[1] = bytePos + 1;
 		fillBits[0] = bitShiftL(1, bytePos + 1) - 1;
 		writeBits(fillBits);

@@ -3,8 +3,8 @@ import fs from "fs";
 /**
  * Read a chunk from a file
  * @param {String} filePath
- * @param {Integer} [startPos]
- * @param {Integer} [len]
+ * @param {int} [startPos]
+ * @param {int} [len]
  * @return {Buffer}
  * @throws {Error} when filePath refers to a file that cannot be read or does NOT exist
  */

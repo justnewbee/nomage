@@ -32,7 +32,7 @@ function generateLocal(relPath, MIME) {
  * @param {String} MIME
  * @param {Number} W
  * @param {Number} H
- * @return {{URL: *, W: *, H: *, MIME: *}}
+ * @return {Object} {URL: *, W: *, H: *, MIME: *}
  */
 function generateRemote(PATH, MIME, W, H) {
 	return {

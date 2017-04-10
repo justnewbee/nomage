@@ -35,3 +35,12 @@ NODE_ENV=test-no-cover ./node_modules/.bin/_mocha --require babel-polyfill --com
 ```
 
 # ABOUT PUBLISH
+
+# REF
+
+gm
+	imagemagick
+	graphicmagick
+http://sharp.dimens.io/
+lwip (pyhon2.7 不能 3, make, gcc )
+jimp

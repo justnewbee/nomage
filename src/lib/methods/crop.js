@@ -1,10 +1,10 @@
 /**
  * crops the image at a given point to a give size FIXME not working
  * note that the numbers can be negative, as long as they cover a range on the canvas
- * @param {Integer} x1 start coordinate x
- * @param {Integer} y1 start coordinate y
- * @param {Integer} x2 end coordinate x
- * @param {Integer} y2 end coordinate y
+ * @param {int} x1 start coordinate x
+ * @param {int} y1 start coordinate y
+ * @param {int} x2 end coordinate x
+ * @param {int} y2 end coordinate y
  */
 export default function(x1, y1, x2, y2) {
 	const range = this._getRange(x1, y1, x2, y2);

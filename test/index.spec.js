@@ -507,5 +507,10 @@ describe("nomage", function() {
 			it("jpg", testOpAndSaveGen("rotate", -360)(IMAGES.JPG));
 			it("png", testOpAndSaveGen("rotate", -360)(IMAGES.PNG));
 		});
+		describe("rotate(45)", () => {
+			it("bmp", testOpAndSaveGen("rotate", 45)(IMAGES.BMP));
+			it("jpg", testOpAndSaveGen("rotate", 45)(IMAGES.JPG));
+			it("png", testOpAndSaveGen("rotate", 45)(IMAGES.PNG));
+		});
 	});
 });

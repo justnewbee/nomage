@@ -37,8 +37,8 @@ const dctSqrt1d2 = 2896; // sqrt(2) / 2
 /**
  * 从 Uint8Array 的 offset 开始读取两个字节
  * @param {Uint8Array} arrUInt8
- * @param {Integer} offset
- * @return {Integer}
+ * @param {int} offset
+ * @return {int}
  */
 function getUInit16(arrUInt8, offset) {
 	return bitOr(bitShiftL(arrUInt8[offset], 8), arrUInt8[offset + 1]);
@@ -46,7 +46,7 @@ function getUInit16(arrUInt8, offset) {
 /**
  * 
  * @param {Uint8Array} arrUInt8
- * @param {Integer} offset
+ * @param {int} offset
  * @return {Uint8Array}
  */
 function getDataBlock(arrUInt8, offset) {
@@ -133,7 +133,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 		}
 		bitsData = data[offset++];
 		if (bitsData == 0xFF) {
-			let nextByte = data[offset++];
+			const nextByte = data[offset++];
 			if (nextByte) {
 				throw new Error(`unexpected marker: ${bitOr(bitShiftL(bitsData, 8), nextByte).toString(16)}`);
 			}
@@ -161,7 +161,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 	function receive(length) {
 		let n = 0;
 		while (length > 0) {
-			let bit = readBit();
+			const bit = readBit();
 			if (bit === null) {
 				return;
 			}
@@ -251,7 +251,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
 		const e = spectralEnd;
 		
 		while (k <= e) {
-			let z = dctZigZag[k];
+			const z = dctZigZag[k];
 			
 			switch (successiveACState) {
 			case 0: // initial state
@@ -434,7 +434,7 @@ function buildComponentData(component) {
 		
 		// inverse DCT on rows
 		for (i = 0; i < 8; ++i) {
-			let row = 8 * i;
+			const row = 8 * i;
 			
 			// check for all-zero AC coefficients
 			if (p[row + 1] == 0 && p[row + 2] == 0 && p[row + 3] == 0 && p[row + 4] == 0 && p[row + 5] == 0 && p[row + 6] == 0 && p[row + 7] == 0) {
@@ -501,7 +501,7 @@ function buildComponentData(component) {
 		
 		// inverse DCT on columns
 		for (i = 0; i < 8; ++i) {
-			let col = i;
+			const col = i;
 			
 			// check for all-zero AC coefficients
 			if (p[col + 8] == 0 && p[col + 8 * 2] == 0 && p[col + 8 * 3] == 0 && p[col + 8 * 4] == 0 && p[col + 8 * 5] == 0 && p[col + 8 * 6] == 0 && p[col + 8 * 7] == 0) {
@@ -811,7 +811,7 @@ function parseComponentData(buffer) {
 				let codeLengthSum = 0;
 				
 				for (j = 0; j < 16; j++, offset++) {
-					codeLengthSum += (codeLengths[j] = data[offset]);
+					codeLengthSum += codeLengths[j] = data[offset];
 				}
 				
 				const huffmanValues = new Uint8Array(codeLengthSum);

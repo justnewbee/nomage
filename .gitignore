@@ -1,8 +1,12 @@
+# dev
+
 .*
-!.gitignore
-!.babelrc
+!.*ignore
+!.*rc
 node_modules/
-build/
+
+# generated
+
 coverage/
-# generated during test
+*.log*
 *saved_by_test*

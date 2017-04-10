@@ -2,10 +2,10 @@
  * adjusts the brightness of the image
  * you can give an optional range
  * @param {Number} [amount=0] adjust between [-1, 1]
- * @param {Integer} [x1]
- * @param {Integer} [y1]
- * @param {Integer} [x2]
- * @param {Integer} [y2]
+ * @param {int} [x1]
+ * @param {int} [y1]
+ * @param {int} [x2]
+ * @param {int} [y2]
  */
 export default function(amount = 0, x1, y1, x2, y2) {
 	if (amount === 0 || amount < -1 || amount > +1) {

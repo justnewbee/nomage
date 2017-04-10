@@ -7,7 +7,7 @@ export default {
 	 * @param {Function} fn
 	 */
 	each(o, fn) {
-		for (let k in o) {
+		for (const k in o) {
 			if (o.hasOwnProperty(k)) {
 				fn(o[k], k);
 			}
@@ -15,44 +15,44 @@ export default {
 	},
 	/**
 	 * bitwise left shift
-	 * @param {Integer} num
-	 * @param {Integer} n
+	 * @param {int} num
+	 * @param {int} n
 	 */
 	bitShiftL(num, n) {
 		return num << n;
 	},
 	/**
 	 * bitwise right shift
-	 * @param {Integer} num
-	 * @param {Integer} n
-	 * @return {Integer}
+	 * @param {int} num
+	 * @param {int} n
+	 * @return {int}
 	 */
 	bitShiftR(num, n) {
 		return num >> n;
 	},
 	/**
 	 * bitwise right shift unsigned
-	 * @param {Integer} num
-	 * @param {Integer} n
-	 * @return {Integer}
+	 * @param {int} num
+	 * @param {int} n
+	 * @return {int}
 	 */
 	bitShiftRU(num, n) {
 		return num >>> n;
 	},
 	/**
 	 * bit and
-	 * @param {Integer} n1
-	 * @param {Integer} n2
-	 * @return {Integer}
+	 * @param {int} n1
+	 * @param {int} n2
+	 * @return {int}
 	 */
 	bitAnd(n1, n2) {
 		return n1 & n2;
 	},
 	/**
 	 * bit or
-	 * @param {Integer} n1
-	 * @param {Integer} n2
-	 * @return {Integer}
+	 * @param {int} n1
+	 * @param {int} n2
+	 * @return {int}
 	 */
 	bitOr(n1, n2) {
 		return n1 | n2;

@@ -10,7 +10,7 @@ export default bitmap => {
 	const rgbSize = height * (3 * width + extraBytes);
 	const rowBytes = 3 * width + extraBytes;
 	
-	let buffer = new Buffer(BMP.DATA_OFFSET + rgbSize);
+	const buffer = new Buffer(BMP.DATA_OFFSET + rgbSize);
 	// header
 	buffer.write(BMP.FLAG, 0, 2);
 	buffer.writeUInt32LE(BMP.DATA_OFFSET + rgbSize, 2);
@@ -32,7 +32,7 @@ export default bitmap => {
 	// data
 	for (let y = height - 1; y >= 0; y--) {
 		for (let x = 0; x < width; x++) {
-			let p = 54 + y * rowBytes + x * 3;
+			const p = 54 + y * rowBytes + x * 3;
 			buffer[p + 2] = data[i++]; // r
 			buffer[p + 1] = data[i++]; // g
 			buffer[p] = data[i++]; // b

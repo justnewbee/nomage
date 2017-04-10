@@ -259,7 +259,7 @@ function resizeHeightInterpolated(buffer, sizing) {
 }
 
 /**
- * 
+ * resize the image
  * @param {Number|String} toWidth absolute size if number, string as `33.4%` for percentage
  * @param {Number|String} [toHeight] if not provided it will be the same ratio as width
  */
