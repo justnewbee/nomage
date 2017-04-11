@@ -13,8 +13,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * Read a chunk from a file
  * @param {String} filePath
- * @param {Integer} [startPos]
- * @param {Integer} [len]
+ * @param {int} [startPos]
+ * @param {int} [len]
  * @return {Buffer}
  * @throws {Error} when filePath refers to a file that cannot be read or does NOT exist
  */

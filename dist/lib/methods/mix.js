@@ -46,8 +46,8 @@ module.exports = exports["default"];
  * you can give an optional range
  * @param {Array|String|Color} color
  * @param {Number} [percentage=50] 1-100
- * @param {Integer} [x1]
- * @param {Integer} [y1]
- * @param {Integer} [x2]
- * @param {Integer} [y2]
+ * @param {int} [x1]
+ * @param {int} [y1]
+ * @param {int} [x2]
+ * @param {int} [y2]
  */

@@ -58,9 +58,9 @@ var Image = function () {
 
 		/**
    * get pixel color as 32bits HEX integer
-   * @param {Integer} x
-   * @param {Integer} y
-   * @return {Integer} rgba color HEX that is below or equal to 0xFFFFFFFF
+   * @param {int} x
+   * @param {int} y
+   * @return {int} rgba color HEX that is below or equal to 0xFFFFFFFF
    */
 		value: function getPixelColorHex(x, y) {
 			var data = this.data;
@@ -71,9 +71,9 @@ var Image = function () {
 		}
 		/**
    * set pixel color with 32bits HEX integer
-   * @param {Integer} x
-   * @param {Integer} y
-   * @param {Integer} hex
+   * @param {int} x
+   * @param {int} y
+   * @param {int} hex
    */
 
 	}, {
@@ -89,8 +89,8 @@ var Image = function () {
 		}
 		/**
    * get pixel color as rgba object
-   * @param {Integer} x
-   * @param {Integer} y
+   * @param {int} x
+   * @param {int} y
    * @return {Object} r, g, b, a values are within the range [0, 255]
    */
 
@@ -110,10 +110,10 @@ var Image = function () {
 		}
 		/**
    * get a range inside the image, if the range is outside of the image, null is returned
-   * @param {Integer} [x1=1]
-   * @param {Integer} [y1=1]
-   * @param {Integer} [x2=this.width]
-   * @param {Integer} [y2=this.height]
+   * @param {int} [x1=1]
+   * @param {int} [y1=1]
+   * @param {int} [x2=this.width]
+   * @param {int} [y2=this.height]
    * @return {Array} or null
    */
 
@@ -411,8 +411,8 @@ var Image = function () {
 
 		/**
    * returns the offset of a pixel in the bitmap buffer
-   * @param {Integer} x
-   * @param {Integer} y
+   * @param {int} x
+   * @param {int} y
    * @returns {Integer} the index of the pixel or -1 if not found
    */
 

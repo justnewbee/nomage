@@ -41,10 +41,10 @@ exports.default = function (srcImg) {
 module.exports = exports["default"]; /**
                                       * blits a source image on to this image
                                       * @param {Image} srcImg
-                                      * @param {Integer} [x=1] the x position to blit
-                                      * @param {Integer} [y=1] the y position to blit
-                                      * @param {Integer} [srcX1=1] the x position from which to blit
-                                      * @param {Integer} [srcY1=1] the y position from which to blit
-                                      * @param {Integer} [srcX2] the width to which to blit
-                                      * @param {Integer} [srcY2] the height to which to blit
+                                      * @param {int} [x=1] the x position to blit
+                                      * @param {int} [y=1] the y position to blit
+                                      * @param {int} [srcX1=1] the x position from which to blit
+                                      * @param {int} [srcY1=1] the y position from which to blit
+                                      * @param {int} [srcX2] the width to which to blit
+                                      * @param {int} [srcY2] the height to which to blit
                                       */

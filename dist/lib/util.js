@@ -30,8 +30,8 @@ exports.default = {
 
 	/**
   * bitwise left shift
-  * @param {Integer} num
-  * @param {Integer} n
+  * @param {int} num
+  * @param {int} n
   */
 	bitShiftL: function bitShiftL(num, n) {
 		return num << n;
@@ -39,9 +39,9 @@ exports.default = {
 
 	/**
   * bitwise right shift
-  * @param {Integer} num
-  * @param {Integer} n
-  * @return {Integer}
+  * @param {int} num
+  * @param {int} n
+  * @return {int}
   */
 	bitShiftR: function bitShiftR(num, n) {
 		return num >> n;
@@ -49,9 +49,9 @@ exports.default = {
 
 	/**
   * bitwise right shift unsigned
-  * @param {Integer} num
-  * @param {Integer} n
-  * @return {Integer}
+  * @param {int} num
+  * @param {int} n
+  * @return {int}
   */
 	bitShiftRU: function bitShiftRU(num, n) {
 		return num >>> n;
@@ -59,9 +59,9 @@ exports.default = {
 
 	/**
   * bit and
-  * @param {Integer} n1
-  * @param {Integer} n2
-  * @return {Integer}
+  * @param {int} n1
+  * @param {int} n2
+  * @return {int}
   */
 	bitAnd: function bitAnd(n1, n2) {
 		return n1 & n2;
@@ -69,9 +69,9 @@ exports.default = {
 
 	/**
   * bit or
-  * @param {Integer} n1
-  * @param {Integer} n2
-  * @return {Integer}
+  * @param {int} n1
+  * @param {int} n2
+  * @return {int}
   */
 	bitOr: function bitOr(n1, n2) {
 		return n1 | n2;

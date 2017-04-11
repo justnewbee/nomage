@@ -38,8 +38,8 @@ module.exports = exports["default"];
  * perform XOR on each color
  * you can give an optional range
  * @param {String|Array} color
- * @param {Integer} [x1]
- * @param {Integer} [y1]
- * @param {Integer} [x2]
- * @param {Integer} [y2]
+ * @param {int} [x1]
+ * @param {int} [y1]
+ * @param {int} [x2]
+ * @param {int} [y2]
  */

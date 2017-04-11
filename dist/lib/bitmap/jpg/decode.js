@@ -40,8 +40,8 @@ var dctSqrt1d2 = 2896; // sqrt(2) / 2
 /**
  * 从 Uint8Array 的 offset 开始读取两个字节
  * @param {Uint8Array} arrUInt8
- * @param {Integer} offset
- * @return {Integer}
+ * @param {int} offset
+ * @return {int}
  */
 function getUInit16(arrUInt8, offset) {
 	return (0, _util.bitOr)((0, _util.bitShiftL)(arrUInt8[offset], 8), arrUInt8[offset + 1]);
@@ -49,7 +49,7 @@ function getUInit16(arrUInt8, offset) {
 /**
  * 
  * @param {Uint8Array} arrUInt8
- * @param {Integer} offset
+ * @param {int} offset
  * @return {Uint8Array}
  */
 function getDataBlock(arrUInt8, offset) {

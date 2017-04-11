@@ -49,8 +49,8 @@ module.exports = exports["default"]; /**
                                       * adjusts the contrast of the image
                                       * you can give an optional range
                                       * @param {Number} [amount=0] adjust between[-1, +1]
-                                      * @param {Integer} [x1]
-                                      * @param {Integer} [y1]
-                                      * @param {Integer} [x2]
-                                      * @param {Integer} [y2]
+                                      * @param {int} [x1]
+                                      * @param {int} [y1]
+                                      * @param {int} [x2]
+                                      * @param {int} [y2]
                                       */

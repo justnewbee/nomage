@@ -23,9 +23,9 @@ var DITHER_RGB565_MATRIX = [1, 9, 3, 11, 13, 5, 15, 7, 4, 12, 2, 10, 16, 8, 14, 
 
 /**
  * apply a ordered dithering effect
- * @param {Integer} [x1]
- * @param {Integer} [y1]
- * @param {Integer} [x2]
- * @param {Integer} [y2]
+ * @param {int} [x1]
+ * @param {int} [y1]
+ * @param {int} [x2]
+ * @param {int} [y2]
  */
 module.exports = exports["default"];
