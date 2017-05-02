@@ -1,14 +1,31 @@
 node-image
 ===
 
-# ABOUT DEV
+# USAGE
+
+# FEATURES
+
+* create
+	- 
+* getters
+	-
+* color manipulation
+	- red
+	- green
+	- blue
+	- contrast
+	- 
+
+# DEV
+
+## 
 
 ```bash
 npm install
 npm start
 ```
 
-# ABOUT TEST
+## ABOUT TEST
 
 ```bash
 npm test
@@ -34,7 +51,7 @@ npm run build && NODE_ENV=test-no-cover ./node_modules/.bin/_mocha --require bab
 NODE_ENV=test-no-cover ./node_modules/.bin/_mocha --require babel-polyfill --compilers js:babel-core/register --timeout 20000 --grep ____
 ```
 
-# ABOUT PUBLISH
+## ABOUT PUBLISH
 
 # REF
 

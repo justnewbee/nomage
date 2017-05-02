@@ -3,6 +3,22 @@ import "should";
 
 import {IMAGES, testOpAndSaveGen} from "./_helper";
 
+describe("brightness(0)", () => {
+	it("bmp", testOpAndSaveGen("brightness", 0)(IMAGES.BMP));
+	it("jpg", testOpAndSaveGen("brightness", 0)(IMAGES.JPG));
+	it("png", testOpAndSaveGen("brightness", 0)(IMAGES.PNG));
+});
+describe("brightness(-2)", () => {
+	it("bmp", testOpAndSaveGen("brightness", -2)(IMAGES.BMP));
+	it("jpg", testOpAndSaveGen("brightness", -2)(IMAGES.JPG));
+	it("png", testOpAndSaveGen("brightness", -2)(IMAGES.PNG));
+});
+describe("brightness(2)", () => {
+	it("bmp", testOpAndSaveGen("brightness", 2)(IMAGES.BMP));
+	it("jpg", testOpAndSaveGen("brightness", 2)(IMAGES.JPG));
+	it("png", testOpAndSaveGen("brightness", 2)(IMAGES.PNG));
+});
+
 describe("brightness(-0.6)", () => {
 	it("bmp", testOpAndSaveGen("brightness", -0.6)(IMAGES.BMP));
 	it("jpg", testOpAndSaveGen("brightness", -0.6)(IMAGES.JPG));
