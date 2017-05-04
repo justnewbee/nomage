@@ -1,3 +1,8 @@
+.babelrc
+.eslintrc
+.eslintignore
 src/
+doc/
 test/
+coverage/
 node_modules/
