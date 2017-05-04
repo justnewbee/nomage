@@ -1,6 +1,10 @@
 node-image
 ===
 
+a pure node image processing tool
+
+> CAUTION: you can play with it, however, processing image is quite slow with pure node, do NOT use on your production projects
+
 # USAGE
 
 ## via CLI
