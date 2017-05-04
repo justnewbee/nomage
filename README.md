@@ -3,6 +3,24 @@ node-image
 
 # USAGE
 
+## via CLI
+
+```bash
+npm install -g nomage
+```
+
+```bash
+nomage base64 _____ # which can be a local file or a URL
+```
+
+## via code
+
+```js
+import nomage from "nomage";
+
+nomage(...).then(...);
+```
+
 # FEATURES
 
 * create
