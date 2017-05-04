@@ -1,37 +1,43 @@
 {
-  "name": "nomage",
-  "version": "1.0.0",
-  "description": "node-image stuff without using native dependencies, inspired by jimp",
-  "main": "dist/index.js",
-  "scripts": {
-    "start": "./node_modules/.bin/babel -w src/ -d dist",
-    "test": "npm run build && NODE_ENV=test-no-cover ./node_modules/.bin/_mocha --require babel-polyfill --compilers js:babel-core/register --timeout 20000",
-    "test-cover": "npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover --report html ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 60000",
-    "build": "./node_modules/.bin/babel src/ -d dist"
-  },
-  "keywords": [
-    "node",
-    "image"
-  ],
-  "author": "justnewbee@gmail.com",
-  "license": "MIT",
-  "dependencies": {
-    "babel-runtime": "^6.23.0",
-    "mkdirp": "^0.5.1",
-    "pngjs": "^3.0.1",
-    "request": "^2.81.0",
-    "tinycolor2": "^1.4.1"
-  },
-  "devDependencies": {
-    "babel-cli": "^6.24.1",
-    "babel-core": "^6.24.1",
-    "babel-istanbul": "^0.12.2",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-0": "^6.24.1",
-    "mocha": "^3.2.0",
-    "should": "^11.2.1"
-  }
+	"name": "nomage",
+	"version": "0.0.1",
+	"description": "node-image stuff without using native dependencies, inspired by jimp",
+	"main": "lib/index.js",
+	"author": "justnewbee@gmail.com",
+	"license": "MIT",
+	"scripts": {
+		"start": "./node_modules/.bin/babel -w src/ -d lib",
+		"test": "npm run build && NODE_ENV=test-no-cover ./node_modules/.bin/_mocha --require babel-polyfill --compilers js:babel-core/register --timeout 20000",
+		"test-cover": "npm run build && ./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover --report html ./node_modules/.bin/_mocha -- --require babel-polyfill --timeout 60000",
+		"build": "rm -rf lib & ./node_modules/.bin/babel src/ -d lib"
+	},
+	"bin": {
+		"nomage": "./bin/nomage"
+	},
+	"keywords": [
+		"node",
+		"image"
+	],
+	"dependencies": {
+		"babel-runtime": "^6.23.0",
+		"chalk": "^1.1.3",
+		"clui": "^0.3.1",
+		"commander": "^2.9.0",
+		"mkdirp": "^0.5.1",
+		"pngjs": "^3.2.0",
+		"request": "^2.81.0",
+		"tinycolor2": "^1.4.1"
+	},
+	"devDependencies": {
+		"babel-cli": "^6.24.1",
+		"babel-core": "^6.24.1",
+		"babel-istanbul": "^0.12.2",
+		"babel-plugin-add-module-exports": "^0.2.1",
+		"babel-plugin-transform-runtime": "^6.23.0",
+		"babel-polyfill": "^6.23.0",
+		"babel-preset-es2015": "^6.24.1",
+		"babel-preset-stage-0": "^6.24.1",
+		"mocha": "^3.3.0",
+		"should": "^11.2.1"
+	}
 }

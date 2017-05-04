@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 
 import nomageAlias from "../src/index";
-import fileMime from "../src/lib/file/mime";
+import fileMime from "../src/file/mime";
 
 const NO_COVER = process.env.NODE_ENV === "test-no-cover"; // 启用覆盖率会导致大图的时候运行特别慢 所以有这个标识
 

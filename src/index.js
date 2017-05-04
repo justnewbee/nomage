@@ -1,10 +1,10 @@
 import path from "path";
 import fs from "fs";
 
-import bitmapDecode from "./lib/bitmap/decode";
-import bitmapEncode from "./lib/bitmap/encode";
-import fileMime from "./lib/file/mime";
-import fileSave from "./lib/file/save";
+import bitmapDecode from "./bitmap/decode";
+import bitmapEncode from "./bitmap/encode";
+import fileMime from "./file/mime";
+import fileSave from "./file/save";
 
 /**
  * a wrapper over bitmap
@@ -382,7 +382,7 @@ class Image {
 		
 		protoOfImage[fileName.replace(/\.js$/, "")] = require(path.join(pluginDir, fileName));
 	});
-})(path.join(__dirname, "lib/methods"));
+})(path.join(__dirname, "methods"));
 
 /**
  * create an Image instance using file path or buffer

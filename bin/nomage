@@ -1,0 +1,44 @@
+#!/usr/bin/env node
+
+const program = require("commander");
+const chalk = require("chalk");
+const clui = require("clui");
+
+const PCK = require("../package.json");
+
+const nomage = require("../lib/");
+
+function outLn(text) {
+	process.stdout.write((text || "") + "\n");
+}
+function errLn(err) {
+	process.stderr.write(chalk.red(err) + "\n");
+}
+
+program.version(PCK.version);
+
+/* // how to add a command
+ * program.command("cmd [param]")
+ *   .description("list all tags")
+ *   .option("-s, --setup_mode [mode]", "Which setup mode to use")
+ *   .action((param, options) => {
+ *     console.info(env, options.setup_mode);
+ * });
+ */
+
+program.command("base64 [image]")
+	.description("convert an image into base64 code")
+	.action(image => {
+		const spinner = new clui.Spinner("loading...");
+		spinner.start();
+		
+		nomage(image).then(instance => instance.toBase64()).then(base64 => {
+			spinner.stop();
+			outLn(base64);
+		}, err => {
+			spinner.stop();
+			errLn(err);
+		});
+	});
+
+program.parse(process.argv);
